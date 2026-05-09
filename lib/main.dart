@@ -14,6 +14,7 @@ import 'briefing.dart';
 import 'tasks.dart';
 import 'wa_setup.dart';
 import 'meeting.dart';
+import 'payment.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -210,9 +211,10 @@ class _HomeScreenState extends State<HomeScreen> {
       });
       FirebaseMessaging.onMessageOpenedApp.listen((msg) {
         final type = msg.data['type'];
-        if (type == 'wa') setState(() => _selectedIndex = 3);
+        if (type == 'wa') setState(() => _selectedIndex = 4);
         else if (type == 'email') setState(() => _selectedIndex = 1);
         else if (type == 'task') setState(() => _selectedIndex = 2);
+        else if (type == 'payment_reminder') setState(() => _selectedIndex = 3);
       });
     } catch (e) {
       debugPrint('[FCM INIT ERROR] $e');
@@ -364,6 +366,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       OrionController().sendCommand(cmd);
                     }),
                     const TasksScreen(),
+                    const PaymentScreen(),
                     const InboxScreen(),
                   ],
                 ),
@@ -398,6 +401,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: Icon(Icons.auto_awesome, size: 20), label: 'Email'),
             const BottomNavigationBarItem(
                 icon: Icon(Icons.task_alt, size: 20), label: 'Tasks'),
+            const BottomNavigationBarItem(
+                icon: Icon(Icons.receipt_long_rounded, size: 20),
+                label: 'Payment'),
             BottomNavigationBarItem(
               icon: Stack(children: [
                 const Icon(Icons.chat_rounded, size: 20),
@@ -421,8 +427,6 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: OrionColors.surface,
       child: SafeArea(
         child: ListView(
-          // ✅ FIX: Hapus const Spacer() — tidak valid di dalam ListView
-          // ListView tidak support Spacer karena tidak punya constraint tinggi fixed
           children: [
             Container(
               padding: const EdgeInsets.all(20),
@@ -439,8 +443,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       ShaderMask(
                         shaderCallback: (b) => const LinearGradient(
-                          colors: [OrionColors.primaryLight,
-                            Color(0xFFE0EAFF)],
+                          colors: [OrionColors.primaryLight, Color(0xFFE0EAFF)],
                         ).createShader(b),
                         child: const Text('Orion AI',
                             style: TextStyle(fontWeight: FontWeight.w700,
@@ -474,7 +477,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 'WhatsApp 24/7', 'Auto reply pesan WA',
                 () {
                   Navigator.pop(context);
-                  setState(() => _selectedIndex = 3);
+                  setState(() => _selectedIndex = 4);
                 }),
             _drawerItem(context, Icons.task_alt_outlined,
                 'Task Extractor', 'Deteksi tugas & deadline',
@@ -529,15 +532,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 'Payment Reminder', 'Nagih customer otomatis',
                 () {
                   Navigator.pop(context);
-                  setState(() => _selectedIndex = 0);
-                  Future.delayed(const Duration(milliseconds: 400), () {
-                    OrionController().sendCommand('daftar invoice');
-                  });
+                  setState(() => _selectedIndex = 3);
                 },
                 color: const Color(0xFF2D8B4E)),
 
-            // ✅ FIX: Ganti Spacer() dengan SizedBox tinggi fixed
-            // Spacer tidak bisa dipakai di ListView karena ListView scroll
             const SizedBox(height: 24),
 
             Container(
@@ -563,7 +561,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ✅ FIX: Tambahkan children: yang hilang di Column dalam _drawerItem
   Widget _drawerItem(BuildContext context, IconData icon, String title,
       String sub, VoidCallback onTap, {Color? color}) {
     final c = color ?? OrionColors.primaryLight;
@@ -853,7 +850,6 @@ class _CommandScreenState extends State<CommandScreen> {
     return SafeArea(
       child: Column(
         children: [
-          // ── Header ──
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
@@ -908,7 +904,6 @@ class _CommandScreenState extends State<CommandScreen> {
             ),
           ),
 
-          // ── Messages ──
           Expanded(
             child: _messages.isEmpty
                 ? _buildWelcome()
@@ -930,7 +925,6 @@ class _CommandScreenState extends State<CommandScreen> {
                   ),
           ),
 
-          // ── Input ──
           Container(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
             decoration: BoxDecoration(
