@@ -63,7 +63,7 @@ class _PaymentScreenState extends State<PaymentScreen>
   bool _loading = true;
   String _error = '';
   String _userId = 'default';
-  String _filter = 'all'; // all, unpaid, paid
+  String _filter = 'all';
   late AnimationController _starController;
   late List<_MiniStarP> _stars;
 
@@ -93,34 +93,11 @@ class _PaymentScreenState extends State<PaymentScreen>
   Future<void> _loadUserAndInvoices() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() => _userId = prefs.getString('user_id') ?? 'default');
-    await _loadInvoices();
-  }
-
-  Future<void> _loadInvoices() async {
-    setState(() { _loading = true; _error = ''; });
-    try {
-      final res = await http.post(
-        Uri.parse('$_PAPI/chat/'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'message': 'daftar invoice',
-          'user_id': _userId
-        }),
-      ).timeout(const Duration(seconds: 20));
-
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        // Parse invoice dari response
-        await _loadInvoicesDirect();
-      } else {
-        setState(() { _error = 'Server error'; _loading = false; });
-      }
-    } catch (e) {
-      setState(() { _error = 'Gagal memuat: $e'; _loading = false; });
-    }
+    await _loadInvoicesDirect();
   }
 
   Future<void> _loadInvoicesDirect() async {
+    setState(() { _loading = true; _error = ''; });
     try {
       final res = await http.get(
         Uri.parse('$_PAPI/chat/invoices/$_userId'),
@@ -133,27 +110,31 @@ class _PaymentScreenState extends State<PaymentScreen>
           _loading = false;
         });
       } else {
-        // Fallback: parse dari chat response
         setState(() { _invoices = []; _loading = false; });
       }
     } catch (e) {
-      setState(() { _invoices = []; _loading = false; });
+      setState(() { _error = 'Gagal memuat: $e'; _loading = false; });
     }
   }
 
   Future<void> _markPaid(String invoiceNumber) async {
-    try:
+    try {
       final res = await http.post(
-        Uri.parse('$_PAPI/chat/'),
+        Uri.parse('$_PAPI/chat/invoices/mark-paid'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'message': '$invoiceNumber sudah lunas',
-          'user_id': _userId
+          'invoice_number': invoiceNumber,
+          'user_id': _userId,
         }),
       );
       if (res.statusCode == 200) {
-        _showSnack('✅ Invoice ditandai lunas!', _PC.success);
-        _loadInvoicesDirect();
+        final data = jsonDecode(res.body);
+        if (data['status'] == 'success') {
+          _showSnack('✅ Invoice ditandai lunas!', _PC.success);
+          _loadInvoicesDirect();
+        } else {
+          _showSnack('❌ ${data['message']}', _PC.danger);
+        }
       }
     } catch (e) {
       _showSnack('❌ Gagal update invoice', _PC.danger);
@@ -166,7 +147,8 @@ class _PaymentScreenState extends State<PaymentScreen>
       backgroundColor: color.withOpacity(0.9),
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      content: Text(msg, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+      content: Text(msg, style: const TextStyle(
+          color: Colors.white, fontWeight: FontWeight.w600)),
       duration: const Duration(seconds: 2),
     ));
   }
@@ -196,7 +178,6 @@ class _PaymentScreenState extends State<PaymentScreen>
     return SafeArea(
       child: Stack(
         children: [
-          // Star background
           AnimatedBuilder(
             animation: _starController,
             builder: (_, __) => CustomPaint(
@@ -209,6 +190,7 @@ class _PaymentScreenState extends State<PaymentScreen>
               _buildHeader(),
               _buildSummaryCards(),
               _buildFilterTabs(),
+              const SizedBox(height: 8),
               Expanded(child: _buildBody()),
             ],
           ),
@@ -303,8 +285,7 @@ class _PaymentScreenState extends State<PaymentScreen>
         color: _PC.surface.withOpacity(0.8),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: color.withOpacity(0.3), width: 0.8),
-        boxShadow: [BoxShadow(
-            color: color.withOpacity(0.1), blurRadius: 12)],
+        boxShadow: [BoxShadow(color: color.withOpacity(0.1), blurRadius: 12)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -319,9 +300,11 @@ class _PaymentScreenState extends State<PaymentScreen>
               child: Icon(icon, color: color, size: 16),
             ),
             const SizedBox(width: 8),
-            Text(label, style: TextStyle(
-                fontSize: 11, color: color,
-                fontWeight: FontWeight.w600)),
+            Flexible(
+              child: Text(label, style: TextStyle(
+                  fontSize: 11, color: color,
+                  fontWeight: FontWeight.w600)),
+            ),
           ]),
           const SizedBox(height: 8),
           Text(value, style: const TextStyle(
@@ -342,7 +325,7 @@ class _PaymentScreenState extends State<PaymentScreen>
         children: [
           _filterTab('all', 'Semua'),
           const SizedBox(width: 8),
-          _filterTab('unpaid', '⏳ Belum Lunas'),
+          _filterTab('unpaid', '⏳ Belum'),
           const SizedBox(width: 8),
           _filterTab('paid', '✅ Lunas'),
         ],
@@ -472,13 +455,11 @@ class _InvoiceCard extends StatelessWidget {
         color: _PC.surface.withOpacity(0.8),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: color.withOpacity(0.25), width: 0.8),
-        boxShadow: [BoxShadow(
-            color: color.withOpacity(0.05), blurRadius: 10)],
+        boxShadow: [BoxShadow(color: color.withOpacity(0.05), blurRadius: 10)],
       ),
       child: IntrinsicHeight(
         child: Row(
           children: [
-            // Status bar kiri
             Container(
               width: 4,
               decoration: BoxDecoration(
@@ -495,7 +476,6 @@ class _InvoiceCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Header row
                     Row(
                       children: [
                         Expanded(
@@ -538,7 +518,6 @@ class _InvoiceCard extends StatelessWidget {
 
                     const SizedBox(height: 10),
 
-                    // Amount & due date
                     Row(
                       children: [
                         Expanded(
@@ -576,12 +555,11 @@ class _InvoiceCard extends StatelessWidget {
                       ],
                     ),
 
-                    // Phone & reminder info
                     if (invoice['customer_phone'] != null &&
                         invoice['customer_phone'].toString().isNotEmpty) ...[
                       const SizedBox(height: 6),
                       Row(children: [
-                        Icon(Icons.phone_rounded,
+                        const Icon(Icons.phone_rounded,
                             color: _PC.textDim, size: 11),
                         const SizedBox(width: 4),
                         Text(
@@ -609,7 +587,6 @@ class _InvoiceCard extends StatelessWidget {
                       ]),
                     ],
 
-                    // Action button kalau belum lunas
                     if (!isPaid) ...[
                       const SizedBox(height: 10),
                       Row(children: [
