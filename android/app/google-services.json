@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "763267377619",
+    "project_id": "orion-ai-62710",
+    "storage_bucket": "orion-ai-62710.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:763267377619:android:0ce424c83da0454995a726",
+        "android_client_info": {
+          "package_name": "com.example.orion_ai_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAtQJZP5M8BGazJfpeT1EQtAR4jXA4vNpw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
