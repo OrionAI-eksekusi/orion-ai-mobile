@@ -57,22 +57,17 @@ class OrionController {
   }
 }
 
-// ── Stats State (global singleton) ───────────────────────
 class OrionStats {
   static final OrionStats _instance = OrionStats._internal();
   factory OrionStats() => _instance;
   OrionStats._internal();
-
   int executions = 47;
   int executionsDelta = 12;
   int emails = 128;
   int emailsDelta = 24;
   int waMessages = 312;
   int waMessagesDelta = 86;
-
   void incrementExecution() { executions++; executionsDelta++; }
-  void incrementEmail() { emails++; emailsDelta++; }
-  void incrementWa() { waMessages++; waMessagesDelta++; }
 }
 
 class OrionApp extends StatelessWidget {
@@ -357,15 +352,13 @@ class _HomeScreenState extends State<HomeScreen> {
               if (_showDisconnectBanner)
                 GestureDetector(
                   onTap: () {
-  Navigator.pop(context);
-  Navigator.pushNamed(context, '/upgrade');
-},
                     setState(() => _showDisconnectBanner = false);
                     Navigator.pushNamed(context, '/wa-reconnect');
                   },
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
                     decoration: BoxDecoration(
                       color: OrionColors.danger.withOpacity(0.1),
                       border: Border(bottom: BorderSide(
@@ -379,9 +372,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                 shape: BoxShape.circle)),
                         const SizedBox(width: 8),
                         const Expanded(
-                            child: Text('WhatsApp terputus — Tap untuk reconnect',
-                                style: TextStyle(color: Color(0xFFFF6666), fontSize: 12))),
-                        const Icon(Icons.chevron_right, color: OrionColors.danger, size: 16),
+                            child: Text(
+                                'WhatsApp terputus — Tap untuk reconnect',
+                                style: TextStyle(
+                                    color: Color(0xFFFF6666), fontSize: 12))),
+                        const Icon(Icons.chevron_right,
+                            color: OrionColors.danger, size: 16),
                       ],
                     ),
                   ),
@@ -435,7 +431,8 @@ class _HomeScreenState extends State<HomeScreen> {
             const BottomNavigationBarItem(
                 icon: Icon(Icons.task_alt, size: 20), label: 'Tasks'),
             const BottomNavigationBarItem(
-                icon: Icon(Icons.receipt_long_rounded, size: 20), label: 'Payment'),
+                icon: Icon(Icons.receipt_long_rounded, size: 20),
+                label: 'Payment'),
             BottomNavigationBarItem(
               icon: Stack(children: [
                 const Icon(Icons.chat_rounded, size: 20),
@@ -460,7 +457,6 @@ class _HomeScreenState extends State<HomeScreen> {
       child: SafeArea(
         child: Column(
           children: [
-            // Header
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -483,7 +479,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 fontSize: 18, color: Colors.white)),
                       ),
                       const Text('AI Execution System',
-                          style: TextStyle(fontSize: 11, color: OrionColors.textDim)),
+                          style: TextStyle(fontSize: 11,
+                              color: OrionColors.textDim)),
                     ],
                   ),
                   const Spacer(),
@@ -495,7 +492,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         color: OrionColors.border.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.close, color: OrionColors.textDim, size: 14),
+                      child: const Icon(Icons.close,
+                          color: OrionColors.textDim, size: 14),
                     ),
                   ),
                 ],
@@ -506,13 +504,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-              child: Row(
-                children: [
-                  Text('FITUR', style: TextStyle(fontSize: 9,
-                      color: OrionColors.textDim,
-                      letterSpacing: 2, fontWeight: FontWeight.w600)),
-                ],
-              ),
+              child: Row(children: [
+                Text('FITUR', style: TextStyle(fontSize: 9,
+                    color: OrionColors.textDim,
+                    letterSpacing: 2, fontWeight: FontWeight.w600)),
+              ]),
             ),
 
             Expanded(
@@ -600,18 +596,26 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(_userName.isNotEmpty ? _userName : 'User',
-                            style: const TextStyle(fontSize: 13,
-                                fontWeight: FontWeight.w600, color: OrionColors.text)),
+                        Text(
+                          _userName.isNotEmpty ? _userName : 'User',
+                          style: const TextStyle(fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: OrionColors.text),
+                        ),
                         const Text('Premium · 12 hari lagi',
-                            style: TextStyle(fontSize: 10, color: OrionColors.textDim)),
+                            style: TextStyle(
+                                fontSize: 10, color: OrionColors.textDim)),
                       ],
                     ),
                   ),
                   GestureDetector(
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/upgrade');
+                    },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
                           colors: [Color(0xFF1A3A8F), OrionColors.primary],
@@ -688,7 +692,8 @@ class OrionLogo extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF0A1428),
         borderRadius: BorderRadius.circular(size * 0.28),
-        border: Border.all(color: OrionColors.primary.withOpacity(0.5), width: 0.8),
+        border: Border.all(
+            color: OrionColors.primary.withOpacity(0.5), width: 0.8),
         boxShadow: [BoxShadow(
             color: OrionColors.primary.withOpacity(0.2), blurRadius: 10)],
       ),
@@ -764,7 +769,8 @@ class _CommandScreenState extends State<CommandScreen> {
       final cmd = OrionController().pendingCommand;
       if (cmd.isNotEmpty) {
         OrionController().pendingCommand = '';
-        Future.delayed(const Duration(milliseconds: 300), () => _sendMessage(cmd));
+        Future.delayed(const Duration(milliseconds: 300),
+            () => _sendMessage(cmd));
       }
     };
   }
@@ -854,8 +860,6 @@ class _CommandScreenState extends State<CommandScreen> {
     });
     _controller.clear();
     _scrollToBottom();
-
-    // Update stats
     OrionStats().incrementExecution();
     widget.onStatsUpdate?.call();
 
@@ -867,6 +871,15 @@ class _CommandScreenState extends State<CommandScreen> {
       );
       final data = jsonDecode(response.body);
       final parsed = data['parsed'] as Map<String, dynamic>?;
+
+      // Cek limit reached
+      if (data['status'] == 'limit_reached') {
+        setState(() {
+          _messages.add({'type': 'ai', 'text': data['response'] ?? 'Limit harian tercapai.'});
+          _isLoading = false;
+        });
+        return;
+      }
 
       if (_needsConfirmation(parsed)) {
         setState(() {
@@ -900,7 +913,8 @@ class _CommandScreenState extends State<CommandScreen> {
       _lastInputWasVoice = false;
     } catch (e) {
       setState(() {
-        _messages.add({'type': 'ai', 'text': 'Gagal terhubung ke server. Coba lagi ya!'});
+        _messages.add({'type': 'ai',
+          'text': 'Gagal terhubung ke server. Coba lagi ya!'});
         _isLoading = false;
       });
       _lastInputWasVoice = false;
@@ -934,11 +948,14 @@ class _CommandScreenState extends State<CommandScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                     itemCount: _messages.length + (_isLoading ? 1 : 0),
                     itemBuilder: (context, i) {
-                      if (i == _messages.length) return const _TypingIndicator();
+                      if (i == _messages.length)
+                        return const _TypingIndicator();
                       final msg = _messages[i];
-                      if (msg['type'] == 'user') return _UserBubble(text: msg['text']);
+                      if (msg['type'] == 'user')
+                        return _UserBubble(text: msg['text']);
                       if (msg['type'] == 'action')
-                        return _ActionCard(data: msg['data'], onSend: _sendMessage);
+                        return _ActionCard(
+                            data: msg['data'], onSend: _sendMessage);
                       return _AiBubble(text: msg['text'] ?? '');
                     },
                   ),
@@ -987,7 +1004,8 @@ class _CommandScreenState extends State<CommandScreen> {
                 ).createShader(b),
                 child: const Text('Orion AI',
                     style: TextStyle(fontWeight: FontWeight.w700,
-                        fontSize: 15, color: Colors.white, letterSpacing: 0.5)),
+                        fontSize: 15, color: Colors.white,
+                        letterSpacing: 0.5)),
               ),
               const Text('AI EXECUTION SYSTEM',
                   style: TextStyle(fontSize: 8,
@@ -1032,7 +1050,8 @@ class _CommandScreenState extends State<CommandScreen> {
               ),
               child: Icon(
                 _isListening ? Icons.mic_rounded : Icons.mic_none_rounded,
-                color: _isListening ? OrionColors.danger : OrionColors.primaryLight,
+                color: _isListening
+                    ? OrionColors.danger : OrionColors.primaryLight,
                 size: 18,
               ),
             ),
@@ -1069,9 +1088,11 @@ class _CommandScreenState extends State<CommandScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: OrionColors.primary, width: 1),
+                  borderSide: const BorderSide(
+                      color: OrionColors.primary, width: 1),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 12),
               ),
               onSubmitted: _sendMessage,
             ),
@@ -1089,7 +1110,8 @@ class _CommandScreenState extends State<CommandScreen> {
                     color: OrionColors.primary.withOpacity(0.3),
                     blurRadius: 8, offset: const Offset(0, 3))],
               ),
-              child: const Icon(Icons.send_rounded, color: Colors.white, size: 16),
+              child: const Icon(Icons.send_rounded,
+                  color: Colors.white, size: 16),
             ),
           ),
         ],
@@ -1144,10 +1166,9 @@ class _CommandScreenState extends State<CommandScreen> {
           const Text(
             'Asisten AI yang benar-benar mengeksekusi\nbukan hanya menjawab',
             textAlign: TextAlign.center,
-            style: TextStyle(color: OrionColors.textDim, fontSize: 12, height: 1.6),
+            style: TextStyle(color: OrionColors.textDim,
+                fontSize: 12, height: 1.6),
           ),
-
-          // ✅ Stats Counter Cards (sesuai PDF)
           const SizedBox(height: 20),
           Row(
             children: [
@@ -1164,7 +1185,6 @@ class _CommandScreenState extends State<CommandScreen> {
                   const Color(0xFFF59E0B))),
             ],
           ),
-
           const SizedBox(height: 24),
           Row(
             children: [
@@ -1196,7 +1216,8 @@ class _CommandScreenState extends State<CommandScreen> {
               Container(width: 20, height: 0.5,
                   color: OrionColors.border.withOpacity(0.3)),
               const SizedBox(width: 10),
-              const Icon(Icons.menu_rounded, color: OrionColors.textDim, size: 12),
+              const Icon(Icons.menu_rounded,
+                  color: OrionColors.textDim, size: 12),
               const SizedBox(width: 6),
               const Text('Tap ☰ untuk lihat semua fitur',
                   style: TextStyle(fontSize: 10, color: OrionColors.textDim)),
@@ -1218,26 +1239,30 @@ class _CommandScreenState extends State<CommandScreen> {
         color: OrionColors.surface.withOpacity(0.6),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: color.withOpacity(0.2), width: 0.8),
-        boxShadow: [BoxShadow(color: color.withOpacity(0.05), blurRadius: 10)],
+        boxShadow: [BoxShadow(
+            color: color.withOpacity(0.05), blurRadius: 10)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label,
-              style: TextStyle(fontSize: 8, color: color.withOpacity(0.7),
+              style: TextStyle(fontSize: 8,
+                  color: color.withOpacity(0.7),
                   letterSpacing: 0.5, fontWeight: FontWeight.w600)),
           const SizedBox(height: 6),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(value,
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800,
+                  style: TextStyle(fontSize: 22,
+                      fontWeight: FontWeight.w800,
                       color: color, height: 1)),
               const SizedBox(width: 3),
               Padding(
                 padding: const EdgeInsets.only(bottom: 2),
                 child: Text(delta,
-                    style: TextStyle(fontSize: 10, color: color.withOpacity(0.6),
+                    style: TextStyle(fontSize: 10,
+                        color: color.withOpacity(0.6),
                         fontWeight: FontWeight.w600)),
               ),
             ],
@@ -1256,7 +1281,8 @@ class _CommandScreenState extends State<CommandScreen> {
         decoration: BoxDecoration(
           color: OrionColors.surface.withOpacity(0.4),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: OrionColors.border.withOpacity(0.25), width: 0.8),
+          border: Border.all(
+              color: OrionColors.border.withOpacity(0.25), width: 0.8),
         ),
         child: Row(
           children: [
@@ -1269,9 +1295,11 @@ class _CommandScreenState extends State<CommandScreen> {
             Expanded(
               child: Text(text,
                   style: const TextStyle(fontSize: 13,
-                      color: OrionColors.text, fontWeight: FontWeight.w400)),
+                      color: OrionColors.text,
+                      fontWeight: FontWeight.w400)),
             ),
-            const Icon(Icons.north_west_rounded, color: OrionColors.textDim, size: 13),
+            const Icon(Icons.north_west_rounded,
+                color: OrionColors.textDim, size: 13),
           ],
         ),
       ),
@@ -1279,7 +1307,7 @@ class _CommandScreenState extends State<CommandScreen> {
   }
 }
 
-// ── Inbox Screen (WA) ─────────────────────────────────────
+// ── Inbox Screen ──────────────────────────────────────────
 class InboxScreen extends StatefulWidget {
   const InboxScreen({super.key});
 
@@ -1310,7 +1338,10 @@ class _InboxScreenState extends State<InboxScreen> {
       if (connected) _loadInbox();
       else setState(() => _loading = false);
     } catch (e) {
-      setState(() { _loading = false; _error = 'Gagal cek status WA'; });
+      setState(() {
+        _loading = false;
+        _error = 'Gagal cek status WA';
+      });
     }
   }
 
@@ -1325,7 +1356,10 @@ class _InboxScreenState extends State<InboxScreen> {
           _loading = false;
         });
       } else {
-        setState(() { _error = 'Server error: ${res.statusCode}'; _loading = false; });
+        setState(() {
+          _error = 'Server error: ${res.statusCode}';
+          _loading = false;
+        });
       }
     } catch (e) {
       setState(() { _error = 'Gagal memuat: $e'; _loading = false; });
@@ -1337,7 +1371,6 @@ class _InboxScreenState extends State<InboxScreen> {
     return SafeArea(
       child: Column(
         children: [
-          // Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
@@ -1352,9 +1385,11 @@ class _InboxScreenState extends State<InboxScreen> {
                   decoration: BoxDecoration(
                     color: OrionColors.success.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: OrionColors.success.withOpacity(0.3)),
+                    border: Border.all(
+                        color: OrionColors.success.withOpacity(0.3)),
                   ),
-                  child: const Icon(Icons.chat_rounded, color: Color(0xFF4CAF50), size: 18),
+                  child: const Icon(Icons.chat_rounded,
+                      color: Color(0xFF4CAF50), size: 18),
                 ),
                 const SizedBox(width: 10),
                 ShaderMask(
@@ -1366,28 +1401,34 @@ class _InboxScreenState extends State<InboxScreen> {
                           fontSize: 15, color: Colors.white)),
                 ),
                 const Spacer(),
-                // Status badge
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: (_waConnected ? OrionColors.success : OrionColors.danger)
-                        .withOpacity(0.1),
+                    color: (_waConnected
+                        ? OrionColors.success
+                        : OrionColors.danger).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                        color: (_waConnected ? OrionColors.success : OrionColors.danger)
-                            .withOpacity(0.3)),
+                        color: (_waConnected
+                            ? OrionColors.success
+                            : OrionColors.danger).withOpacity(0.3)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(width: 5, height: 5,
                           decoration: BoxDecoration(
-                              color: _waConnected ? OrionColors.success : OrionColors.danger,
+                              color: _waConnected
+                                  ? OrionColors.success
+                                  : OrionColors.danger,
                               shape: BoxShape.circle)),
                       const SizedBox(width: 5),
                       Text(_waConnected ? 'Connected' : 'Disconnected',
                           style: TextStyle(fontSize: 10,
-                              color: _waConnected ? OrionColors.success : OrionColors.danger,
+                              color: _waConnected
+                                  ? OrionColors.success
+                                  : OrionColors.danger,
                               fontWeight: FontWeight.w500)),
                     ],
                   ),
@@ -1400,7 +1441,8 @@ class _InboxScreenState extends State<InboxScreen> {
                     decoration: BoxDecoration(
                       color: OrionColors.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: OrionColors.primary.withOpacity(0.3)),
+                      border: Border.all(
+                          color: OrionColors.primary.withOpacity(0.3)),
                     ),
                     child: const Icon(Icons.refresh_rounded,
                         color: OrionColors.primaryLight, size: 15),
@@ -1409,79 +1451,6 @@ class _InboxScreenState extends State<InboxScreen> {
               ],
             ),
           ),
-
-          // Stats WA (sesuai PDF)
-          if (_waConnected)
-            Container(
-              margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: OrionColors.surface.withOpacity(0.8),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: OrionColors.success.withOpacity(0.2)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 40, height: 40,
-                    decoration: BoxDecoration(
-                      color: OrionColors.success.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: OrionColors.success.withOpacity(0.3)),
-                    ),
-                    child: const Icon(Icons.chat_bubble_rounded,
-                        color: Color(0xFF4CAF50), size: 18),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('BOT AKTIF',
-                          style: TextStyle(fontSize: 9, color: OrionColors.textDim,
-                              letterSpacing: 1)),
-                      Row(children: [
-                        Container(width: 6, height: 6,
-                            decoration: const BoxDecoration(
-                                color: Color(0xFF4CAF50),
-                                shape: BoxShape.circle)),
-                        const SizedBox(width: 6),
-                        const Text('WA Business',
-                            style: TextStyle(fontSize: 13,
-                                fontWeight: FontWeight.w600, color: OrionColors.text)),
-                      ]),
-                    ],
-                  ),
-                  const Spacer(),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      const Text('HARI INI',
-                          style: TextStyle(fontSize: 9, color: OrionColors.textDim,
-                              letterSpacing: 1)),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text('${_waMessages.length}',
-                              style: const TextStyle(fontSize: 22,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFF4CAF50), height: 1)),
-                          const SizedBox(width: 3),
-                          const Padding(
-                            padding: EdgeInsets.only(bottom: 2),
-                            child: Text('+12',
-                                style: TextStyle(fontSize: 10,
-                                    color: Color(0xFF4CAF50))),
-                          ),
-                        ],
-                      ),
-                      const Text('pesan dibalas',
-                          style: TextStyle(fontSize: 9, color: OrionColors.textDim)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
           Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator(
@@ -1505,13 +1474,18 @@ class _InboxScreenState extends State<InboxScreen> {
                             const SizedBox(height: 16),
                             const Text('WhatsApp Business terputus',
                                 style: TextStyle(color: OrionColors.text,
-                                    fontSize: 15, fontWeight: FontWeight.w600)),
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600)),
                             const SizedBox(height: 6),
-                            const Text('Scan QR untuk menghubungkan kembali',
-                                style: TextStyle(color: OrionColors.textDim, fontSize: 12)),
+                            const Text(
+                                'Scan QR untuk menghubungkan kembali',
+                                style: TextStyle(
+                                    color: OrionColors.textDim,
+                                    fontSize: 12)),
                             const SizedBox(height: 24),
                             GestureDetector(
-                              onTap: () => Navigator.pushNamed(context, '/wa-reconnect'),
+                              onTap: () => Navigator.pushNamed(
+                                  context, '/wa-reconnect'),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 24, vertical: 12),
@@ -1519,11 +1493,14 @@ class _InboxScreenState extends State<InboxScreen> {
                                   color: OrionColors.danger.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
-                                      color: OrionColors.danger.withOpacity(0.5), width: 0.8),
+                                      color: OrionColors.danger.withOpacity(0.5),
+                                      width: 0.8),
                                 ),
                                 child: const Text('Reconnect WhatsApp',
-                                    style: TextStyle(color: OrionColors.danger,
-                                        fontSize: 14, fontWeight: FontWeight.w600)),
+                                    style: TextStyle(
+                                        color: OrionColors.danger,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600)),
                               ),
                             ),
                           ],
@@ -1539,14 +1516,17 @@ class _InboxScreenState extends State<InboxScreen> {
                             child: _waMessages.isEmpty
                                 ? const Center(
                                     child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         Icon(Icons.chat_rounded,
-                                            color: OrionColors.textDim, size: 48),
+                                            color: OrionColors.textDim,
+                                            size: 48),
                                         SizedBox(height: 12),
                                         Text('Belum ada pesan masuk',
                                             style: TextStyle(
-                                                color: OrionColors.textDim, fontSize: 13)),
+                                                color: OrionColors.textDim,
+                                                fontSize: 13)),
                                       ],
                                     ),
                                   )
@@ -1578,15 +1558,18 @@ class _UserBubble extends StatelessWidget {
         children: [
           Flexible(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [Color(0xFF1A3A8F), OrionColors.primary],
                   begin: Alignment.topLeft, end: Alignment.bottomRight,
                 ),
                 borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(18), topRight: Radius.circular(18),
-                  bottomLeft: Radius.circular(18), bottomRight: Radius.circular(4),
+                  topLeft: Radius.circular(18),
+                  topRight: Radius.circular(18),
+                  bottomLeft: Radius.circular(18),
+                  bottomRight: Radius.circular(4),
                 ),
                 boxShadow: [BoxShadow(
                     color: OrionColors.primary.withOpacity(0.3),
@@ -1622,19 +1605,27 @@ class _AiBubble extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('Orion AI',
-                    style: TextStyle(fontSize: 10, color: OrionColors.primaryLight,
+                    style: TextStyle(fontSize: 10,
+                        color: OrionColors.primaryLight,
                         fontWeight: FontWeight.w600, letterSpacing: 0.3)),
                 const SizedBox(height: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
                     color: OrionColors.surface.withOpacity(0.8),
                     borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(4), topRight: Radius.circular(18),
-                      bottomLeft: Radius.circular(18), bottomRight: Radius.circular(18),
+                      topLeft: Radius.circular(4),
+                      topRight: Radius.circular(18),
+                      bottomLeft: Radius.circular(18),
+                      bottomRight: Radius.circular(18),
                     ),
-                    border: Border.all(color: OrionColors.border.withOpacity(0.3), width: 0.5),
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8)],
+                    border: Border.all(
+                        color: OrionColors.border.withOpacity(0.3),
+                        width: 0.5),
+                    boxShadow: [BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 8)],
                   ),
                   child: Text(text, style: const TextStyle(
                       fontSize: 14, color: OrionColors.text, height: 1.5)),
@@ -1667,7 +1658,8 @@ class _ActionCardState extends State<_ActionCard> {
   void initState() {
     super.initState();
     _parsed = widget.data['parsed'] ?? {};
-    _draftController = TextEditingController(text: _parsed['draft'] ?? '');
+    _draftController =
+        TextEditingController(text: _parsed['draft'] ?? '');
   }
 
   @override
@@ -1686,7 +1678,8 @@ class _ActionCardState extends State<_ActionCard> {
         await http.post(
           Uri.parse('$API/chat/send-email'),
           headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'to': replyTo, 'subject': subject, 'body': body}),
+          body: jsonEncode(
+              {'to': replyTo, 'subject': subject, 'body': body}),
         );
       }
       setState(() => _status = 'terkirim');
@@ -1701,8 +1694,10 @@ class _ActionCardState extends State<_ActionCard> {
     final summary = _parsed['summary'] ?? _parsed['action'] ?? '';
     final replyTo = _parsed['reply_to'] ?? '';
     final subject = _parsed['subject'] ?? '';
-    final isEmail = intent.contains('email') || intent.contains('gmail');
-    final accentColor = isEmail ? const Color(0xFFFF6B6B) : const Color(0xFF4CAF50);
+    final isEmail =
+        intent.contains('email') || intent.contains('gmail');
+    final accentColor =
+        isEmail ? const Color(0xFFFF6B6B) : const Color(0xFF4CAF50);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16, right: 16),
@@ -1718,17 +1713,22 @@ class _ActionCardState extends State<_ActionCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('Orion AI',
-                    style: TextStyle(fontSize: 10, color: OrionColors.primaryLight,
+                    style: TextStyle(fontSize: 10,
+                        color: OrionColors.primaryLight,
                         fontWeight: FontWeight.w600, letterSpacing: 0.3)),
                 const SizedBox(height: 4),
                 Container(
                   decoration: BoxDecoration(
                     color: OrionColors.surface.withOpacity(0.8),
                     borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(4), topRight: Radius.circular(18),
-                      bottomLeft: Radius.circular(18), bottomRight: Radius.circular(18),
+                      topLeft: Radius.circular(4),
+                      topRight: Radius.circular(18),
+                      bottomLeft: Radius.circular(18),
+                      bottomRight: Radius.circular(18),
                     ),
-                    border: Border.all(color: OrionColors.border.withOpacity(0.3), width: 0.5),
+                    border: Border.all(
+                        color: OrionColors.border.withOpacity(0.3),
+                        width: 0.5),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1738,9 +1738,11 @@ class _ActionCardState extends State<_ActionCard> {
                         decoration: BoxDecoration(
                           color: accentColor.withOpacity(0.05),
                           border: Border(bottom: BorderSide(
-                              color: OrionColors.border.withOpacity(0.2), width: 0.5)),
+                              color: OrionColors.border.withOpacity(0.2),
+                              width: 0.5)),
                           borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(4), topRight: Radius.circular(18)),
+                              topLeft: Radius.circular(4),
+                              topRight: Radius.circular(18)),
                         ),
                         child: Row(
                           children: [
@@ -1749,9 +1751,13 @@ class _ActionCardState extends State<_ActionCard> {
                               decoration: BoxDecoration(
                                 color: accentColor.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: accentColor.withOpacity(0.3)),
+                                border: Border.all(
+                                    color: accentColor.withOpacity(0.3)),
                               ),
-                              child: Icon(isEmail ? Icons.email_outlined : Icons.chat_outlined,
+                              child: Icon(
+                                  isEmail
+                                      ? Icons.email_outlined
+                                      : Icons.chat_outlined,
                                   color: accentColor, size: 15),
                             ),
                             const SizedBox(width: 10),
@@ -1759,17 +1765,21 @@ class _ActionCardState extends State<_ActionCard> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Konfirmasi ${isEmail ? "Email" : "Pesan"}',
+                                  Text(
+                                      'Konfirmasi ${isEmail ? "Email" : "Pesan"}',
                                       style: const TextStyle(fontSize: 12,
-                                          fontWeight: FontWeight.w700, color: OrionColors.text)),
+                                          fontWeight: FontWeight.w700,
+                                          color: OrionColors.text)),
                                   Text(intent.toUpperCase(),
                                       style: const TextStyle(fontSize: 9,
-                                          color: OrionColors.textDim, letterSpacing: 1)),
+                                          color: OrionColors.textDim,
+                                          letterSpacing: 1)),
                                 ],
                               ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
                                 color: OrionColors.bg.withOpacity(0.5),
                                 borderRadius: BorderRadius.circular(6),
@@ -1795,24 +1805,30 @@ class _ActionCardState extends State<_ActionCard> {
                                 padding: const EdgeInsets.only(bottom: 10),
                                 child: Text(summary,
                                     style: const TextStyle(fontSize: 12,
-                                        color: OrionColors.textDim, height: 1.4)),
+                                        color: OrionColors.textDim,
+                                        height: 1.4)),
                               ),
                             if (_parsed['draft'] != null) ...[
                               Container(
                                 decoration: BoxDecoration(
                                   color: OrionColors.bg.withOpacity(0.5),
                                   borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: OrionColors.border.withOpacity(0.2)),
+                                  border: Border.all(
+                                      color: OrionColors.border
+                                          .withOpacity(0.2)),
                                 ),
                                 child: Column(
                                   children: [
-                                    if (replyTo.isNotEmpty) _emailRow('Kepada', replyTo),
-                                    if (subject.isNotEmpty) _emailRow('Subjek', subject),
+                                    if (replyTo.isNotEmpty)
+                                      _emailRow('Kepada', replyTo),
+                                    if (subject.isNotEmpty)
+                                      _emailRow('Subjek', subject),
                                     TextField(
                                       controller: _draftController,
                                       maxLines: 4,
                                       style: const TextStyle(fontSize: 13,
-                                          color: OrionColors.text, height: 1.5),
+                                          color: OrionColors.text,
+                                          height: 1.5),
                                       decoration: const InputDecoration(
                                         border: InputBorder.none,
                                         contentPadding: EdgeInsets.all(12),
@@ -1830,23 +1846,34 @@ class _ActionCardState extends State<_ActionCard> {
                                     child: GestureDetector(
                                       onTap: _confirm,
                                       child: Container(
-                                        padding: const EdgeInsets.symmetric(vertical: 11),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 11),
                                         decoration: BoxDecoration(
                                           gradient: const LinearGradient(
-                                              colors: [Color(0xFF1A3A8F), OrionColors.primary]),
-                                          borderRadius: BorderRadius.circular(10),
+                                              colors: [Color(0xFF1A3A8F),
+                                                OrionColors.primary]),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
                                           boxShadow: [BoxShadow(
-                                              color: OrionColors.primary.withOpacity(0.3),
-                                              blurRadius: 8, offset: const Offset(0, 3))],
+                                              color: OrionColors.primary
+                                                  .withOpacity(0.3),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 3))],
                                         ),
                                         child: const Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           children: [
-                                            Icon(Icons.send_rounded, color: Colors.white, size: 13),
+                                            Icon(Icons.send_rounded,
+                                                color: Colors.white,
+                                                size: 13),
                                             SizedBox(width: 6),
                                             Text('Kirim Sekarang',
-                                                style: TextStyle(color: Colors.white,
-                                                    fontSize: 13, fontWeight: FontWeight.w700)),
+                                                style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 13,
+                                                    fontWeight:
+                                                        FontWeight.w700)),
                                           ],
                                         ),
                                       ),
@@ -1854,15 +1881,19 @@ class _ActionCardState extends State<_ActionCard> {
                                   ),
                                   const SizedBox(width: 8),
                                   GestureDetector(
-                                    onTap: () => setState(() => _status = 'dibatalkan'),
+                                    onTap: () => setState(
+                                        () => _status = 'dibatalkan'),
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
                                           vertical: 11, horizontal: 16),
                                       decoration: BoxDecoration(
-                                        color: OrionColors.bg.withOpacity(0.5),
-                                        borderRadius: BorderRadius.circular(10),
+                                        color:
+                                            OrionColors.bg.withOpacity(0.5),
+                                        borderRadius:
+                                            BorderRadius.circular(10),
                                         border: Border.all(
-                                            color: OrionColors.border.withOpacity(0.3)),
+                                            color: OrionColors.border
+                                                .withOpacity(0.3)),
                                       ),
                                       child: const Text('Batal',
                                           style: TextStyle(fontSize: 13,
@@ -1877,8 +1908,10 @@ class _ActionCardState extends State<_ActionCard> {
                                     color: OrionColors.success, size: 16),
                                 const SizedBox(width: 6),
                                 const Text('Berhasil dikirim! ✅',
-                                    style: TextStyle(color: OrionColors.success,
-                                        fontSize: 13, fontWeight: FontWeight.w600)),
+                                    style: TextStyle(
+                                        color: OrionColors.success,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600)),
                               ]),
                             if (_status == 'gagal')
                               Row(children: [
@@ -1886,11 +1919,15 @@ class _ActionCardState extends State<_ActionCard> {
                                     color: OrionColors.danger, size: 16),
                                 const SizedBox(width: 6),
                                 const Text('Gagal mengirim',
-                                    style: TextStyle(color: OrionColors.danger, fontSize: 13)),
+                                    style: TextStyle(
+                                        color: OrionColors.danger,
+                                        fontSize: 13)),
                               ]),
                             if (_status == 'dibatalkan')
                               const Text('Aksi dibatalkan',
-                                  style: TextStyle(color: OrionColors.textDim, fontSize: 13)),
+                                  style: TextStyle(
+                                      color: OrionColors.textDim,
+                                      fontSize: 13)),
                           ],
                         ),
                       ),
@@ -1915,8 +1952,8 @@ class _ActionCardState extends State<_ActionCard> {
           Text(label, style: const TextStyle(fontSize: 11,
               color: OrionColors.textDim, fontWeight: FontWeight.w500)),
           const SizedBox(width: 8),
-          Expanded(child: Text(value,
-              style: const TextStyle(fontSize: 11, color: OrionColors.text))),
+          Expanded(child: Text(value, style: const TextStyle(
+              fontSize: 11, color: OrionColors.text))),
         ],
       ),
     );
@@ -1942,18 +1979,24 @@ class _TypingIndicator extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text('Orion AI',
-                  style: TextStyle(fontSize: 10, color: OrionColors.primaryLight,
+                  style: TextStyle(fontSize: 10,
+                      color: OrionColors.primaryLight,
                       fontWeight: FontWeight.w600, letterSpacing: 0.3)),
               const SizedBox(height: 4),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: OrionColors.surface.withOpacity(0.8),
                   borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(4), topRight: Radius.circular(18),
-                    bottomLeft: Radius.circular(18), bottomRight: Radius.circular(18),
+                    topLeft: Radius.circular(4),
+                    topRight: Radius.circular(18),
+                    bottomLeft: Radius.circular(18),
+                    bottomRight: Radius.circular(18),
                   ),
-                  border: Border.all(color: OrionColors.border.withOpacity(0.3), width: 0.5),
+                  border: Border.all(
+                      color: OrionColors.border.withOpacity(0.3),
+                      width: 0.5),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -1966,7 +2009,8 @@ class _TypingIndicator extends StatelessWidget {
                     ),
                     const SizedBox(width: 10),
                     const Text('Orion sedang berpikir...',
-                        style: TextStyle(fontSize: 12, color: OrionColors.textDim)),
+                        style: TextStyle(fontSize: 12,
+                            color: OrionColors.textDim)),
                   ],
                 ),
               ),
@@ -1986,7 +2030,7 @@ class _WaItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final phone = message['phone']?.toString() ?? '';
-    final initials = phone.isNotEmpty ? phone[0] : '?';
+    final initials = phone.isNotEmpty ? phone[0].toUpperCase() : '?';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -1994,21 +2038,22 @@ class _WaItem extends StatelessWidget {
       decoration: BoxDecoration(
         color: OrionColors.surface.withOpacity(0.6),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: OrionColors.border.withOpacity(0.3), width: 0.5),
+        border: Border.all(
+            color: OrionColors.border.withOpacity(0.3), width: 0.5),
       ),
       child: Row(
         children: [
           Container(
             width: 42, height: 42,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [const Color(0xFF2D8B4E).withOpacity(0.3),
-                  const Color(0xFF4CAF50).withOpacity(0.1)],
-              ),
+              gradient: LinearGradient(colors: [
+                const Color(0xFF2D8B4E).withOpacity(0.3),
+                const Color(0xFF4CAF50).withOpacity(0.1),
+              ]),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Center(
-              child: Text(initials.toUpperCase(),
+              child: Text(initials,
                   style: const TextStyle(color: Color(0xFF4CAF50),
                       fontWeight: FontWeight.w700, fontSize: 16)),
             ),
@@ -2022,7 +2067,8 @@ class _WaItem extends StatelessWidget {
                   Expanded(
                     child: Text(phone,
                         style: const TextStyle(fontSize: 12,
-                            fontWeight: FontWeight.w600, color: OrionColors.text)),
+                            fontWeight: FontWeight.w600,
+                            color: OrionColors.text)),
                   ),
                   Text(message['time']?.toString() ?? '',
                       style: TextStyle(fontSize: 9,
@@ -2030,17 +2076,20 @@ class _WaItem extends StatelessWidget {
                 ]),
                 const SizedBox(height: 3),
                 Text(message['message']?.toString() ?? '',
-                    style: const TextStyle(fontSize: 11, color: OrionColors.textDim),
+                    style: const TextStyle(fontSize: 11,
+                        color: OrionColors.textDim),
                     overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: OrionColors.success.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: const Text('AI Dibalas Orion',
-                      style: TextStyle(fontSize: 9, color: OrionColors.success,
+                      style: TextStyle(fontSize: 9,
+                          color: OrionColors.success,
                           fontWeight: FontWeight.w600)),
                 ),
               ],
