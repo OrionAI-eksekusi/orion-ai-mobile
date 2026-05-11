@@ -15,6 +15,7 @@ import 'tasks.dart';
 import 'wa_setup.dart';
 import 'meeting.dart';
 import 'payment.dart';
+import 'upgrade.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -96,6 +97,7 @@ class OrionApp extends StatelessWidget {
         '/wa-reconnect': (context) => const WaSetupScreen(isReconnect: true),
         '/home': (context) => const HomeScreen(),
         '/meeting': (context) => const MeetingScreen(),
+        '/upgrade': (context) => const UpgradeScreen(),
       },
     );
   }
@@ -355,6 +357,9 @@ class _HomeScreenState extends State<HomeScreen> {
               if (_showDisconnectBanner)
                 GestureDetector(
                   onTap: () {
+  Navigator.pop(context);
+  Navigator.pushNamed(context, '/upgrade');
+},
                     setState(() => _showDisconnectBanner = false);
                     Navigator.pushNamed(context, '/wa-reconnect');
                   },
