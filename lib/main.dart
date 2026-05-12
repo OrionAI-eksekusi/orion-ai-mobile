@@ -809,10 +809,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Padding(
                           padding: const EdgeInsets.fromLTRB(12, 0, 12, 14),
                           child: GestureDetector(
-                            onTap: () {
-                              Navigator.pop(context);
-                              Navigator.pushNamed(context, '/upgrade');
-                            },
+                            onTap: () => _handleZenithFeature(context),
                             child: Container(
                               width: double.infinity,
                               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -910,6 +907,26 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+
+  void _handleApexFeature(BuildContext context, VoidCallback action) {
+    if (_userPlan == 'free') {
+      Navigator.pop(context);
+      Navigator.pushNamed(context, '/upgrade');
+    } else {
+      action();
+    }
+  }
+
+  void _handleZenithFeature(BuildContext context) {
+    if (_userPlan == 'zenith' || _userPlan == 'trial') {
+      Navigator.pop(context);
+      Navigator.pushNamed(context, '/zenith');
+    } else {
+      Navigator.pop(context);
+      Navigator.pushNamed(context, '/upgrade');
+    }
   }
 
   Widget _drawerItem(BuildContext context, IconData icon, String title,
