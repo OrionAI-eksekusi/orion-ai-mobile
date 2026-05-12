@@ -43,6 +43,7 @@ class OrionColors {
   static const success = Color(0xFF2D8B4E);
   static const danger = Color(0xFFFF4444);
   static const warning = Color(0xFFF59E0B);
+  static const zenith = Color(0xFFFFD700);
 }
 
 class OrionController {
@@ -195,6 +196,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Timer? _waCheckTimer;
   String _userName = '';
   String _userInitials = '';
+  String _userPlan = 'trial';
+  int _trialDaysLeft = 3;
 
   @override
   void initState() {
@@ -207,10 +210,26 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadUserInfo() async {
     final prefs = await SharedPreferences.getInstance();
     final name = prefs.getString('user_name') ?? 'User';
+    final userId = prefs.getString('user_id') ?? 'default';
     final initials = name.isNotEmpty
         ? name.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
         : 'U';
     if (mounted) setState(() { _userName = name; _userInitials = initials; });
+
+    // Load plan info
+    try {
+      final res = await http.get(
+        Uri.parse('$API/chat/plan/$userId'),
+      ).timeout(const Duration(seconds: 5));
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        final plan = data['plan'] ?? {};
+        if (mounted) setState(() {
+          _userPlan = plan['plan'] ?? 'free';
+          _trialDaysLeft = plan['trial_days_left'] ?? 0;
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _initFCM() async {
@@ -339,6 +358,13 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  String _getPlanLabel() {
+    if (_userPlan == 'trial') return '✨ Trial · $_trialDaysLeft hari lagi';
+    if (_userPlan == 'apex') return '⚡ Apex';
+    if (_userPlan == 'zenith') return '👑 Zenith';
+    return '🆓 Free';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -451,22 +477,24 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // ── Drawer ────────────────────────────────────────────
   Widget _buildDrawer(BuildContext context) {
     return Drawer(
       backgroundColor: OrionColors.surface,
       child: SafeArea(
         child: Column(
           children: [
+            // Header
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
                 border: Border(bottom: BorderSide(
                     color: OrionColors.border.withOpacity(0.2), width: 0.5)),
               ),
               child: Row(
                 children: [
-                  const OrionLogo(size: 40),
-                  const SizedBox(width: 12),
+                  const OrionLogo(size: 38),
+                  const SizedBox(width: 10),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -475,11 +503,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           colors: [OrionColors.primaryLight, Color(0xFFE0EAFF)],
                         ).createShader(b),
                         child: const Text('Orion AI',
-                            style: TextStyle(fontWeight: FontWeight.w700,
-                                fontSize: 18, color: Colors.white)),
+                            style: TextStyle(fontWeight: FontWeight.w800,
+                                fontSize: 17, color: Colors.white)),
                       ),
                       const Text('AI Execution System',
-                          style: TextStyle(fontSize: 11,
+                          style: TextStyle(fontSize: 10,
                               color: OrionColors.textDim)),
                     ],
                   ),
@@ -487,88 +515,341 @@ class _HomeScreenState extends State<HomeScreen> {
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
                     child: Container(
-                      width: 30, height: 30,
+                      width: 28, height: 28,
                       decoration: BoxDecoration(
                         color: OrionColors.border.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(Icons.close,
-                          color: OrionColors.textDim, size: 14),
+                          color: OrionColors.textDim, size: 13),
                     ),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 8),
-
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-              child: Row(children: [
-                Text('FITUR', style: TextStyle(fontSize: 9,
-                    color: OrionColors.textDim,
-                    letterSpacing: 2, fontWeight: FontWeight.w600)),
-              ]),
-            ),
-
             Expanded(
               child: ListView(
-                padding: EdgeInsets.zero,
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
                 children: [
-                  _drawerItem(context, Icons.email_outlined,
-                      'Email Otomatis', 'Baca & balas email bisnis',
-                      () { Navigator.pop(context); setState(() => _selectedIndex = 1); }),
-                  _drawerItem(context, Icons.chat_rounded,
-                      'WhatsApp 24/7', 'Auto reply pesan WA',
-                      () { Navigator.pop(context); setState(() => _selectedIndex = 4); }),
-                  _drawerItem(context, Icons.task_alt_outlined,
-                      'Task Extractor', 'Deteksi tugas & deadline',
-                      () { Navigator.pop(context); setState(() => _selectedIndex = 2); }),
-                  _drawerItem(context, Icons.auto_awesome,
-                      'Smart Briefing', 'Laporan harian otomatis',
-                      () { Navigator.pop(context); setState(() => _selectedIndex = 1); }),
-                  _drawerItem(context, Icons.campaign_outlined,
-                      'Broadcast WA', 'Kirim ke semua customer',
-                      () {
-                        Navigator.pop(context);
-                        setState(() => _selectedIndex = 0);
-                        Future.delayed(const Duration(milliseconds: 400), () {
-                          OrionController().sendCommand('broadcast pesan ke semua customer');
-                        });
-                      }),
-                  _drawerItem(context, Icons.folder_outlined,
-                      'Kirim File Drive', 'Forward file via email',
-                      () {
-                        Navigator.pop(context);
-                        setState(() => _selectedIndex = 0);
-                        Future.delayed(const Duration(milliseconds: 400), () {
-                          OrionController().sendCommand('kirimkan file dari Google Drive');
-                        });
-                      }),
-                  _drawerItem(context, Icons.picture_as_pdf_outlined,
-                      'Auto Quotation', 'Generate PDF penawaran',
-                      () {
-                        Navigator.pop(context);
-                        setState(() => _selectedIndex = 0);
-                        Future.delayed(const Duration(milliseconds: 400), () {
-                          OrionController().sendCommand('buatkan quotation untuk customer');
-                        });
-                      }),
-                  _drawerItem(context, Icons.mic_rounded,
-                      'Meeting Transcriber', 'Notulen otomatis dari audio',
-                      () { Navigator.pop(context); Navigator.pushNamed(context, '/meeting'); },
-                      color: const Color(0xFFFF6666)),
-                  _drawerItem(context, Icons.receipt_long_outlined,
-                      'Payment Reminder', 'Nagih customer otomatis',
-                      () { Navigator.pop(context); setState(() => _selectedIndex = 3); },
-                      color: const Color(0xFF2D8B4E)),
+
+                  // ── APEX Card ──────────────────────────
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF080F22),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                          color: OrionColors.primaryLight.withOpacity(0.35),
+                          width: 1),
+                      boxShadow: [BoxShadow(
+                          color: OrionColors.primary.withOpacity(0.12),
+                          blurRadius: 16)],
+                    ),
+                    child: Column(
+                      children: [
+                        // Apex header
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 38, height: 38,
+                                decoration: BoxDecoration(
+                                  color: OrionColors.primaryLight.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                      color: OrionColors.primaryLight.withOpacity(0.3)),
+                                ),
+                                child: const Center(
+                                    child: Text('⚡',
+                                        style: TextStyle(fontSize: 20))),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    ShaderMask(
+                                      shaderCallback: (b) => const LinearGradient(
+                                        colors: [OrionColors.primaryLight,
+                                          Color(0xFFE0EAFF)],
+                                      ).createShader(b),
+                                      child: const Text('APEX',
+                                          style: TextStyle(fontSize: 17,
+                                              fontWeight: FontWeight.w800,
+                                              color: Colors.white,
+                                              letterSpacing: 1.5)),
+                                    ),
+                                    const Text('Rp 120.000/bulan',
+                                        style: TextStyle(fontSize: 10,
+                                            color: OrionColors.textDim)),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: OrionColors.success.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                      color: OrionColors.success.withOpacity(0.4)),
+                                ),
+                                child: const Text('AKTIF',
+                                    style: TextStyle(fontSize: 9,
+                                        color: OrionColors.success,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.5)),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        Divider(height: 1,
+                            color: OrionColors.border.withOpacity(0.2)),
+
+                        // Apex fitur list
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+                          child: Column(
+                            children: [
+                              _drawerItem(context, Icons.email_outlined,
+                                  'Email Otomatis', 'Baca & balas email bisnis',
+                                  () { Navigator.pop(context); setState(() => _selectedIndex = 1); }),
+                              _drawerItem(context, Icons.chat_rounded,
+                                  'WhatsApp 24/7', 'Auto reply pesan WA',
+                                  () { Navigator.pop(context); setState(() => _selectedIndex = 4); }),
+                              _drawerItem(context, Icons.task_alt_outlined,
+                                  'Task Extractor', 'Deteksi tugas & deadline',
+                                  () { Navigator.pop(context); setState(() => _selectedIndex = 2); }),
+                              _drawerItem(context, Icons.auto_awesome,
+                                  'Smart Briefing', 'Laporan harian otomatis',
+                                  () { Navigator.pop(context); setState(() => _selectedIndex = 1); }),
+                              _drawerItem(context, Icons.trending_up_rounded,
+                                  'Sales AI', 'Auto closing & follow up customer',
+                                  () {
+                                    Navigator.pop(context);
+                                    setState(() => _selectedIndex = 0);
+                                    Future.delayed(const Duration(milliseconds: 400), () {
+                                      OrionController().sendCommand('bantu saya closing customer');
+                                    });
+                                  }, color: const Color(0xFF4CAF50)),
+                              _drawerItem(context, Icons.campaign_outlined,
+                                  'Broadcast WA', 'Kirim ke semua customer',
+                                  () {
+                                    Navigator.pop(context);
+                                    setState(() => _selectedIndex = 0);
+                                    Future.delayed(const Duration(milliseconds: 400), () {
+                                      OrionController().sendCommand('broadcast pesan ke semua customer');
+                                    });
+                                  }),
+                              _drawerItem(context, Icons.picture_as_pdf_outlined,
+                                  'Auto Quotation', 'Generate PDF penawaran',
+                                  () {
+                                    Navigator.pop(context);
+                                    setState(() => _selectedIndex = 0);
+                                    Future.delayed(const Duration(milliseconds: 400), () {
+                                      OrionController().sendCommand('buatkan quotation untuk customer');
+                                    });
+                                  }),
+                              _drawerItem(context, Icons.folder_outlined,
+                                  'Kirim File Drive', 'Forward file via email',
+                                  () {
+                                    Navigator.pop(context);
+                                    setState(() => _selectedIndex = 0);
+                                    Future.delayed(const Duration(milliseconds: 400), () {
+                                      OrionController().sendCommand('kirimkan file dari Google Drive');
+                                    });
+                                  }),
+                              _drawerItem(context, Icons.mic_rounded,
+                                  'Meeting Transcriber', 'Notulen otomatis dari audio',
+                                  () { Navigator.pop(context); Navigator.pushNamed(context, '/meeting'); },
+                                  color: const Color(0xFFFF6666)),
+                              _drawerItem(context, Icons.receipt_long_outlined,
+                                  'Payment Reminder', 'Nagih customer otomatis',
+                                  () { Navigator.pop(context); setState(() => _selectedIndex = 3); },
+                                  color: const Color(0xFF2D8B4E)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // ── ZENITH Card ────────────────────────
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF0D0A00), Color(0xFF080510)],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                          color: Color(0xFFFFD700), width: 0.8),
+                      boxShadow: [BoxShadow(
+                          color: Color(0xFFFFD700).withOpacity(0.12),
+                          blurRadius: 20)],
+                    ),
+                    child: Column(
+                      children: [
+                        // Zenith header
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 38, height: 38,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFD700).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                      color: const Color(0xFFFFD700).withOpacity(0.4)),
+                                ),
+                                child: const Center(
+                                    child: Text('👑',
+                                        style: TextStyle(fontSize: 20))),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    ShaderMask(
+                                      shaderCallback: (b) => const LinearGradient(
+                                        colors: [Color(0xFFFFD700),
+                                          Color(0xFFFFF3A0),
+                                          Color(0xFFFFD700)],
+                                      ).createShader(b),
+                                      child: const Text('ZENITH',
+                                          style: TextStyle(fontSize: 17,
+                                              fontWeight: FontWeight.w800,
+                                              color: Colors.white,
+                                              letterSpacing: 1.5)),
+                                    ),
+                                    const Text('Rp 135.000/bulan · Enterprise',
+                                        style: TextStyle(fontSize: 10,
+                                            color: Color(0xFF8B7A3A))),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFD700).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                      color: const Color(0xFFFFD700).withOpacity(0.5)),
+                                ),
+                                child: const Text('SOON',
+                                    style: TextStyle(fontSize: 9,
+                                        color: Color(0xFFFFD700),
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.5)),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        Divider(height: 1,
+                            color: const Color(0xFFFFD700).withOpacity(0.15)),
+
+                        // Zenith tagline
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(14, 10, 14, 4),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 3, height: 28,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFD700),
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              const Expanded(
+                                child: Text(
+                                  'Enterprise Risk Intelligence\n& AI Governance Platform',
+                                  style: TextStyle(fontSize: 11,
+                                      color: Color(0xFFCCAA44),
+                                      fontWeight: FontWeight.w600,
+                                      height: 1.4),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Zenith fitur preview
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(8, 8, 8, 12),
+                          child: Column(
+                            children: [
+                              _zenithItem('🛡️', 'Price Guard AI',
+                                  'Deteksi markup harga vendor otomatis'),
+                              _zenithItem('🔍', 'Vendor Intelligence',
+                                  'Audit & validasi vendor, deteksi vendor fiktif'),
+                              _zenithItem('⚠️', 'Transaction Anomaly Engine',
+                                  'AI deteksi transaksi mencurigakan'),
+                              _zenithItem('📊', 'Executive Dashboard',
+                                  'Dashboard real-time level direksi'),
+                              _zenithItem('🔬', 'OCR Invoice Forensic',
+                                  'Scan & analisa manipulasi invoice'),
+                              _zenithItem('🛒', 'Procurement Watch',
+                                  'Monitor pembelian & efisiensi perusahaan'),
+                              _zenithItem('📋', 'Compliance Center',
+                                  'Audit trail & policy violation tracker'),
+                              _zenithItem('🤖', 'AI Investigator',
+                                  'AI bantu auditor investigasi anomali'),
+                            ],
+                          ),
+                        ),
+
+                        // Zenith CTA
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 14),
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.pop(context);
+                              Navigator.pushNamed(context, '/upgrade');
+                            },
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFF8B6914), Color(0xFFFFD700)],
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [BoxShadow(
+                                    color: const Color(0xFFFFD700).withOpacity(0.3),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4))],
+                              ),
+                              child: const Center(
+                                child: Text('👑 Upgrade ke Zenith',
+                                    style: TextStyle(
+                                        color: Color(0xFF1A0F00),
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 13,
+                                        letterSpacing: 0.3)),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
 
-            // User profile + upgrade footer
+            // ── User Profile Footer ────────────────────
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 border: Border(top: BorderSide(
                     color: OrionColors.border.withOpacity(0.2), width: 0.5)),
@@ -602,8 +883,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               fontWeight: FontWeight.w600,
                               color: OrionColors.text),
                         ),
-                        const Text('Premium · 12 hari lagi',
-                            style: TextStyle(
+                        Text(_getPlanLabel(),
+                            style: const TextStyle(
                                 fontSize: 10, color: OrionColors.textDim)),
                       ],
                     ),
@@ -645,26 +926,26 @@ class _HomeScreenState extends State<HomeScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
         child: Row(
           children: [
             Container(
-              width: 36, height: 36,
+              width: 32, height: 32,
               decoration: BoxDecoration(
                 color: c.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(9),
                 border: Border.all(color: c.withOpacity(0.2)),
               ),
-              child: Icon(icon, color: c, size: 17),
+              child: Icon(icon, color: c, size: 15),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontSize: 13,
+                  Text(title, style: const TextStyle(fontSize: 12,
                       fontWeight: FontWeight.w600, color: OrionColors.text)),
                   Text(sub, style: const TextStyle(
                       fontSize: 10, color: OrionColors.textDim)),
@@ -672,9 +953,59 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             Icon(Icons.chevron_right,
-                color: OrionColors.textDim.withOpacity(0.3), size: 14),
+                color: OrionColors.textDim.withOpacity(0.3), size: 13),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _zenithItem(String emoji, String title, String sub) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFD700).withOpacity(0.03),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+            color: const Color(0xFFFFD700).withOpacity(0.08), width: 0.5),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 32, height: 32,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFD700).withOpacity(0.08),
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Center(
+                child: Text(emoji, style: const TextStyle(fontSize: 15))),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFFCCAA44))),
+                Text(sub, style: TextStyle(fontSize: 10,
+                    color: const Color(0xFFFFD700).withOpacity(0.4))),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFD700).withOpacity(0.08),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: const Text('SOON',
+                style: TextStyle(fontSize: 8,
+                    color: Color(0xFFFFD700),
+                    fontWeight: FontWeight.w600)),
+          ),
+        ],
       ),
     );
   }
@@ -872,10 +1203,10 @@ class _CommandScreenState extends State<CommandScreen> {
       final data = jsonDecode(response.body);
       final parsed = data['parsed'] as Map<String, dynamic>?;
 
-      // Cek limit reached
       if (data['status'] == 'limit_reached') {
         setState(() {
-          _messages.add({'type': 'ai', 'text': data['response'] ?? 'Limit harian tercapai.'});
+          _messages.add({'type': 'ai',
+            'text': data['response'] ?? 'Limit harian tercapai.'});
           _isLoading = false;
         });
         return;
@@ -1338,10 +1669,7 @@ class _InboxScreenState extends State<InboxScreen> {
       if (connected) _loadInbox();
       else setState(() => _loading = false);
     } catch (e) {
-      setState(() {
-        _loading = false;
-        _error = 'Gagal cek status WA';
-      });
+      setState(() { _loading = false; _error = 'Gagal cek status WA'; });
     }
   }
 
@@ -1356,10 +1684,7 @@ class _InboxScreenState extends State<InboxScreen> {
           _loading = false;
         });
       } else {
-        setState(() {
-          _error = 'Server error: ${res.statusCode}';
-          _loading = false;
-        });
+        setState(() { _error = 'Server error: ${res.statusCode}'; _loading = false; });
       }
     } catch (e) {
       setState(() { _error = 'Gagal memuat: $e'; _loading = false; });
@@ -1385,8 +1710,7 @@ class _InboxScreenState extends State<InboxScreen> {
                   decoration: BoxDecoration(
                     color: OrionColors.success.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                        color: OrionColors.success.withOpacity(0.3)),
+                    border: Border.all(color: OrionColors.success.withOpacity(0.3)),
                   ),
                   child: const Icon(Icons.chat_rounded,
                       color: Color(0xFF4CAF50), size: 18),
@@ -1402,17 +1726,14 @@ class _InboxScreenState extends State<InboxScreen> {
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: (_waConnected
-                        ? OrionColors.success
-                        : OrionColors.danger).withOpacity(0.1),
+                    color: (_waConnected ? OrionColors.success : OrionColors.danger)
+                        .withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                        color: (_waConnected
-                            ? OrionColors.success
-                            : OrionColors.danger).withOpacity(0.3)),
+                        color: (_waConnected ? OrionColors.success : OrionColors.danger)
+                            .withOpacity(0.3)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -1420,15 +1741,13 @@ class _InboxScreenState extends State<InboxScreen> {
                       Container(width: 5, height: 5,
                           decoration: BoxDecoration(
                               color: _waConnected
-                                  ? OrionColors.success
-                                  : OrionColors.danger,
+                                  ? OrionColors.success : OrionColors.danger,
                               shape: BoxShape.circle)),
                       const SizedBox(width: 5),
                       Text(_waConnected ? 'Connected' : 'Disconnected',
                           style: TextStyle(fontSize: 10,
                               color: _waConnected
-                                  ? OrionColors.success
-                                  : OrionColors.danger,
+                                  ? OrionColors.success : OrionColors.danger,
                               fontWeight: FontWeight.w500)),
                     ],
                   ),
@@ -1441,8 +1760,7 @@ class _InboxScreenState extends State<InboxScreen> {
                     decoration: BoxDecoration(
                       color: OrionColors.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                          color: OrionColors.primary.withOpacity(0.3)),
+                      border: Border.all(color: OrionColors.primary.withOpacity(0.3)),
                     ),
                     child: const Icon(Icons.refresh_rounded,
                         color: OrionColors.primaryLight, size: 15),
@@ -1456,12 +1774,10 @@ class _InboxScreenState extends State<InboxScreen> {
                 ? const Center(child: CircularProgressIndicator(
                     color: OrionColors.primaryLight, strokeWidth: 1.5))
                 : !_waConnected
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 72, height: 72,
+                    ? Center(child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(width: 72, height: 72,
                               decoration: BoxDecoration(
                                 color: OrionColors.danger.withOpacity(0.1),
                                 shape: BoxShape.circle,
@@ -1469,43 +1785,37 @@ class _InboxScreenState extends State<InboxScreen> {
                                     color: OrionColors.danger.withOpacity(0.3)),
                               ),
                               child: const Icon(Icons.wifi_off_rounded,
-                                  color: OrionColors.danger, size: 34),
-                            ),
-                            const SizedBox(height: 16),
-                            const Text('WhatsApp Business terputus',
-                                style: TextStyle(color: OrionColors.text,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600)),
-                            const SizedBox(height: 6),
-                            const Text(
-                                'Scan QR untuk menghubungkan kembali',
-                                style: TextStyle(
-                                    color: OrionColors.textDim,
-                                    fontSize: 12)),
-                            const SizedBox(height: 24),
-                            GestureDetector(
-                              onTap: () => Navigator.pushNamed(
-                                  context, '/wa-reconnect'),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 24, vertical: 12),
-                                decoration: BoxDecoration(
-                                  color: OrionColors.danger.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(
-                                      color: OrionColors.danger.withOpacity(0.5),
-                                      width: 0.8),
-                                ),
-                                child: const Text('Reconnect WhatsApp',
-                                    style: TextStyle(
-                                        color: OrionColors.danger,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600)),
+                                  color: OrionColors.danger, size: 34)),
+                          const SizedBox(height: 16),
+                          const Text('WhatsApp Business terputus',
+                              style: TextStyle(color: OrionColors.text,
+                                  fontSize: 15, fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 6),
+                          const Text('Scan QR untuk menghubungkan kembali',
+                              style: TextStyle(color: OrionColors.textDim,
+                                  fontSize: 12)),
+                          const SizedBox(height: 24),
+                          GestureDetector(
+                            onTap: () => Navigator.pushNamed(
+                                context, '/wa-reconnect'),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 24, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: OrionColors.danger.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                    color: OrionColors.danger.withOpacity(0.5),
+                                    width: 0.8),
                               ),
+                              child: const Text('Reconnect WhatsApp',
+                                  style: TextStyle(color: OrionColors.danger,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600)),
                             ),
-                          ],
-                        ),
-                      )
+                          ),
+                        ],
+                      ))
                     : _error.isNotEmpty
                         ? Center(child: Text(_error,
                             style: const TextStyle(
@@ -1514,22 +1824,18 @@ class _InboxScreenState extends State<InboxScreen> {
                             onRefresh: _loadInbox,
                             color: OrionColors.primaryLight,
                             child: _waMessages.isEmpty
-                                ? const Center(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.chat_rounded,
-                                            color: OrionColors.textDim,
-                                            size: 48),
-                                        SizedBox(height: 12),
-                                        Text('Belum ada pesan masuk',
-                                            style: TextStyle(
-                                                color: OrionColors.textDim,
-                                                fontSize: 13)),
-                                      ],
-                                    ),
-                                  )
+                                ? const Center(child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.chat_rounded,
+                                          color: OrionColors.textDim, size: 48),
+                                      SizedBox(height: 12),
+                                      Text('Belum ada pesan masuk',
+                                          style: TextStyle(
+                                              color: OrionColors.textDim,
+                                              fontSize: 13)),
+                                    ],
+                                  ))
                                 : ListView.builder(
                                     padding: const EdgeInsets.all(12),
                                     itemCount: _waMessages.length,
@@ -1558,18 +1864,15 @@ class _UserBubble extends StatelessWidget {
         children: [
           Flexible(
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [Color(0xFF1A3A8F), OrionColors.primary],
                   begin: Alignment.topLeft, end: Alignment.bottomRight,
                 ),
                 borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(18),
-                  topRight: Radius.circular(18),
-                  bottomLeft: Radius.circular(18),
-                  bottomRight: Radius.circular(4),
+                  topLeft: Radius.circular(18), topRight: Radius.circular(18),
+                  bottomLeft: Radius.circular(18), bottomRight: Radius.circular(4),
                 ),
                 boxShadow: [BoxShadow(
                     color: OrionColors.primary.withOpacity(0.3),
@@ -1610,22 +1913,17 @@ class _AiBubble extends StatelessWidget {
                         fontWeight: FontWeight.w600, letterSpacing: 0.3)),
                 const SizedBox(height: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
                     color: OrionColors.surface.withOpacity(0.8),
                     borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(4),
-                      topRight: Radius.circular(18),
-                      bottomLeft: Radius.circular(18),
-                      bottomRight: Radius.circular(18),
+                      topLeft: Radius.circular(4), topRight: Radius.circular(18),
+                      bottomLeft: Radius.circular(18), bottomRight: Radius.circular(18),
                     ),
                     border: Border.all(
-                        color: OrionColors.border.withOpacity(0.3),
-                        width: 0.5),
+                        color: OrionColors.border.withOpacity(0.3), width: 0.5),
                     boxShadow: [BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 8)],
+                        color: Colors.black.withOpacity(0.1), blurRadius: 8)],
                   ),
                   child: Text(text, style: const TextStyle(
                       fontSize: 14, color: OrionColors.text, height: 1.5)),
@@ -1658,8 +1956,7 @@ class _ActionCardState extends State<_ActionCard> {
   void initState() {
     super.initState();
     _parsed = widget.data['parsed'] ?? {};
-    _draftController =
-        TextEditingController(text: _parsed['draft'] ?? '');
+    _draftController = TextEditingController(text: _parsed['draft'] ?? '');
   }
 
   @override
@@ -1678,8 +1975,7 @@ class _ActionCardState extends State<_ActionCard> {
         await http.post(
           Uri.parse('$API/chat/send-email'),
           headers: {'Content-Type': 'application/json'},
-          body: jsonEncode(
-              {'to': replyTo, 'subject': subject, 'body': body}),
+          body: jsonEncode({'to': replyTo, 'subject': subject, 'body': body}),
         );
       }
       setState(() => _status = 'terkirim');
@@ -1694,10 +1990,9 @@ class _ActionCardState extends State<_ActionCard> {
     final summary = _parsed['summary'] ?? _parsed['action'] ?? '';
     final replyTo = _parsed['reply_to'] ?? '';
     final subject = _parsed['subject'] ?? '';
-    final isEmail =
-        intent.contains('email') || intent.contains('gmail');
-    final accentColor =
-        isEmail ? const Color(0xFFFF6B6B) : const Color(0xFF4CAF50);
+    final isEmail = intent.contains('email') || intent.contains('gmail');
+    final accentColor = isEmail
+        ? const Color(0xFFFF6B6B) : const Color(0xFF4CAF50);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16, right: 16),
@@ -1721,14 +2016,12 @@ class _ActionCardState extends State<_ActionCard> {
                   decoration: BoxDecoration(
                     color: OrionColors.surface.withOpacity(0.8),
                     borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(4),
-                      topRight: Radius.circular(18),
+                      topLeft: Radius.circular(4), topRight: Radius.circular(18),
                       bottomLeft: Radius.circular(18),
                       bottomRight: Radius.circular(18),
                     ),
                     border: Border.all(
-                        color: OrionColors.border.withOpacity(0.3),
-                        width: 0.5),
+                        color: OrionColors.border.withOpacity(0.3), width: 0.5),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1755,8 +2048,7 @@ class _ActionCardState extends State<_ActionCard> {
                                     color: accentColor.withOpacity(0.3)),
                               ),
                               child: Icon(
-                                  isEmail
-                                      ? Icons.email_outlined
+                                  isEmail ? Icons.email_outlined
                                       : Icons.chat_outlined,
                                   color: accentColor, size: 15),
                             ),
@@ -1765,8 +2057,7 @@ class _ActionCardState extends State<_ActionCard> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                      'Konfirmasi ${isEmail ? "Email" : "Pesan"}',
+                                  Text('Konfirmasi ${isEmail ? "Email" : "Pesan"}',
                                       style: const TextStyle(fontSize: 12,
                                           fontWeight: FontWeight.w700,
                                           color: OrionColors.text)),
@@ -1814,8 +2105,7 @@ class _ActionCardState extends State<_ActionCard> {
                                   color: OrionColors.bg.withOpacity(0.5),
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                      color: OrionColors.border
-                                          .withOpacity(0.2)),
+                                      color: OrionColors.border.withOpacity(0.2)),
                                 ),
                                 child: Column(
                                   children: [
@@ -1827,8 +2117,7 @@ class _ActionCardState extends State<_ActionCard> {
                                       controller: _draftController,
                                       maxLines: 4,
                                       style: const TextStyle(fontSize: 13,
-                                          color: OrionColors.text,
-                                          height: 1.5),
+                                          color: OrionColors.text, height: 1.5),
                                       decoration: const InputDecoration(
                                         border: InputBorder.none,
                                         contentPadding: EdgeInsets.all(12),
@@ -1852,8 +2141,7 @@ class _ActionCardState extends State<_ActionCard> {
                                           gradient: const LinearGradient(
                                               colors: [Color(0xFF1A3A8F),
                                                 OrionColors.primary]),
-                                          borderRadius:
-                                              BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(10),
                                           boxShadow: [BoxShadow(
                                               color: OrionColors.primary
                                                   .withOpacity(0.3),
@@ -1865,15 +2153,13 @@ class _ActionCardState extends State<_ActionCard> {
                                               MainAxisAlignment.center,
                                           children: [
                                             Icon(Icons.send_rounded,
-                                                color: Colors.white,
-                                                size: 13),
+                                                color: Colors.white, size: 13),
                                             SizedBox(width: 6),
                                             Text('Kirim Sekarang',
                                                 style: TextStyle(
                                                     color: Colors.white,
                                                     fontSize: 13,
-                                                    fontWeight:
-                                                        FontWeight.w700)),
+                                                    fontWeight: FontWeight.w700)),
                                           ],
                                         ),
                                       ),
@@ -1887,10 +2173,8 @@ class _ActionCardState extends State<_ActionCard> {
                                       padding: const EdgeInsets.symmetric(
                                           vertical: 11, horizontal: 16),
                                       decoration: BoxDecoration(
-                                        color:
-                                            OrionColors.bg.withOpacity(0.5),
-                                        borderRadius:
-                                            BorderRadius.circular(10),
+                                        color: OrionColors.bg.withOpacity(0.5),
+                                        borderRadius: BorderRadius.circular(10),
                                         border: Border.all(
                                             color: OrionColors.border
                                                 .withOpacity(0.3)),
@@ -1903,31 +2187,28 @@ class _ActionCardState extends State<_ActionCard> {
                                 ],
                               ),
                             if (_status == 'terkirim')
-                              Row(children: [
-                                const Icon(Icons.check_circle_rounded,
+                              const Row(children: [
+                                Icon(Icons.check_circle_rounded,
                                     color: OrionColors.success, size: 16),
-                                const SizedBox(width: 6),
-                                const Text('Berhasil dikirim! ✅',
-                                    style: TextStyle(
-                                        color: OrionColors.success,
+                                SizedBox(width: 6),
+                                Text('Berhasil dikirim! ✅',
+                                    style: TextStyle(color: OrionColors.success,
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600)),
                               ]),
                             if (_status == 'gagal')
-                              Row(children: [
-                                const Icon(Icons.error_outline_rounded,
+                              const Row(children: [
+                                Icon(Icons.error_outline_rounded,
                                     color: OrionColors.danger, size: 16),
-                                const SizedBox(width: 6),
-                                const Text('Gagal mengirim',
+                                SizedBox(width: 6),
+                                Text('Gagal mengirim',
                                     style: TextStyle(
-                                        color: OrionColors.danger,
-                                        fontSize: 13)),
+                                        color: OrionColors.danger, fontSize: 13)),
                               ]),
                             if (_status == 'dibatalkan')
                               const Text('Aksi dibatalkan',
                                   style: TextStyle(
-                                      color: OrionColors.textDim,
-                                      fontSize: 13)),
+                                      color: OrionColors.textDim, fontSize: 13)),
                           ],
                         ),
                       ),
@@ -1952,8 +2233,8 @@ class _ActionCardState extends State<_ActionCard> {
           Text(label, style: const TextStyle(fontSize: 11,
               color: OrionColors.textDim, fontWeight: FontWeight.w500)),
           const SizedBox(width: 8),
-          Expanded(child: Text(value, style: const TextStyle(
-              fontSize: 11, color: OrionColors.text))),
+          Expanded(child: Text(value,
+              style: const TextStyle(fontSize: 11, color: OrionColors.text))),
         ],
       ),
     );
@@ -1995,8 +2276,7 @@ class _TypingIndicator extends StatelessWidget {
                     bottomRight: Radius.circular(18),
                   ),
                   border: Border.all(
-                      color: OrionColors.border.withOpacity(0.3),
-                      width: 0.5),
+                      color: OrionColors.border.withOpacity(0.3), width: 0.5),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -2009,8 +2289,8 @@ class _TypingIndicator extends StatelessWidget {
                     ),
                     const SizedBox(width: 10),
                     const Text('Orion sedang berpikir...',
-                        style: TextStyle(fontSize: 12,
-                            color: OrionColors.textDim)),
+                        style: TextStyle(
+                            fontSize: 12, color: OrionColors.textDim)),
                   ],
                 ),
               ),
@@ -2076,8 +2356,8 @@ class _WaItem extends StatelessWidget {
                 ]),
                 const SizedBox(height: 3),
                 Text(message['message']?.toString() ?? '',
-                    style: const TextStyle(fontSize: 11,
-                        color: OrionColors.textDim),
+                    style: const TextStyle(
+                        fontSize: 11, color: OrionColors.textDim),
                     overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 4),
                 Container(
