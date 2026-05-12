@@ -68,13 +68,14 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       if (account != null && mounted) {
         // Simpan user_id ke SharedPreferences
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('user_id', account.email);
+        final userId = account.email.split('@')[0].toUpperCase();
+await prefs.setString('user_id', userId);
         await prefs.setString('user_name', account.displayName ?? '');
         await prefs.setString('user_email', account.email);
 
         // Kirim profil user ke backend
         await _saveUserProfile(
-          userId: account.email,
+          userId: userId,
           name: account.displayName ?? account.email,
           email: account.email,
         );
