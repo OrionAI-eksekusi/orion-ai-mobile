@@ -806,31 +806,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 14),
-                          child: GestureDetector(
-                            onTap: () => _handleZenithFeature(context),
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFF8B6914), Color(0xFFFFD700)],
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [BoxShadow(
-                                    color: const Color(0xFFFFD700).withOpacity(0.3),
-                                    blurRadius: 12, offset: const Offset(0, 4))],
-                              ),
-                              child: const Center(
-                                child: Text('👑 Upgrade ke Zenith',
-                                    style: TextStyle(color: Color(0xFF1A0F00),
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 13, letterSpacing: 0.3)),
-                              ),
-                            ),
-                          ),
-                        ),
+
                       ],
                     ),
                   ),
