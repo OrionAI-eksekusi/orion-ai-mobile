@@ -16,6 +16,7 @@ import 'wa_setup.dart';
 import 'meeting.dart';
 import 'payment.dart';
 import 'upgrade.dart';
+import 'zenith.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -133,6 +134,7 @@ class OrionApp extends StatelessWidget {
         '/home': (context) => const HomeScreen(),
         '/meeting': (context) => const MeetingScreen(),
         '/upgrade': (context) => const UpgradeScreen(),
+        '/zenith': (context) => const ZenithScreen(),
       },
     );
   }
@@ -809,7 +811,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: GestureDetector(
                             onTap: () {
                               Navigator.pop(context);
-                              Navigator.pushNamed(context, '/upgrade');
+                              Navigator.pushNamed(context, '/zenith');
                             },
                             child: Container(
                               width: double.infinity,
