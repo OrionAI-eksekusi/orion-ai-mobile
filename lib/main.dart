@@ -811,7 +811,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: GestureDetector(
                             onTap: () {
                               Navigator.pop(context);
-                              Navigator.pushNamed(context, '/zenith');
+                              Navigator.pushNamed(context, '/upgrade');
                             },
                             child: Container(
                               width: double.infinity,
