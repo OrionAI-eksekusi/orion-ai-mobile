@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'dart:math' as math;
+import 'package:image_picker/image_picker.dart';
 
 const String _ZAPI = 'https://web-production-d2935.up.railway.app';
 
@@ -1184,7 +1185,40 @@ class _VendorIntelTabState extends State<_VendorIntelTab> {
           ]),
         ),
         const SizedBox(height: 16),
-        if (_result != null) _buildVendorResult(_result!)
+        if (_result != null)
+          _result!['status'] == 'not_found'
+              ? Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: _ZC.warning.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: _ZC.warning.withOpacity(0.3)),
+                  ),
+                  child: Column(children: [
+                    const Text('🔍', style: TextStyle(fontSize: 40)),
+                    const SizedBox(height: 12),
+                    const Text('Vendor tidak ditemukan di database',
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700,
+                            color: _ZC.warning)),
+                    const SizedBox(height: 8),
+                    const Text('Vendor belum memiliki transaksi yang tercatat',
+                        style: TextStyle(fontSize: 12, color: _ZC.textDim),
+                        textAlign: TextAlign.center),
+                    const SizedBox(height: 16),
+                    const Text('💡 SARAN:',
+                        style: TextStyle(fontSize: 11, color: _ZC.gold,
+                            fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 8),
+                    const Text(
+                      '1. Pastikan nama vendor sesuai data transaksi\n'
+                      '2. Tambah transaksi di tab Price Guard dulu\n'
+                      '3. Coba nama sebagian: "Maju" bukan "PT Maju Jaya"\n'
+                      '4. Pakai AI Investigator untuk analisa semua vendor',
+                      style: TextStyle(fontSize: 11, color: _ZC.textDim, height: 1.6),
+                    ),
+                  ]),
+                )
+              : _buildVendorResult(_result!)
         else const Center(
           child: Padding(
             padding: EdgeInsets.symmetric(vertical: 40),
@@ -1752,8 +1786,29 @@ class _OcrForensicTab extends StatefulWidget {
 
 class _OcrForensicTabState extends State<_OcrForensicTab> {
   final _invoiceCtrl = TextEditingController();
+  final _picker = ImagePicker();
   bool _scanning = false;
   Map<String, dynamic>? _result;
+  String? _imagePath;
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final picked = await _picker.pickImage(source: source, imageQuality: 85);
+      if (picked != null) {
+        setState(() => _imagePath = picked.path);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('📄 Foto dipilih — copy teks dari foto lalu paste di kolom bawah'),
+            backgroundColor: Color(0xFF2D5BE3),
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: \$e'), backgroundColor: _ZC.danger));
+    }
+  }
 
   Future<void> _scan() async {
     if (_invoiceCtrl.text.isEmpty) return;
@@ -1800,9 +1855,69 @@ class _OcrForensicTabState extends State<_OcrForensicTab> {
                 style: TextStyle(fontSize: 12, color: _ZC.gold,
                     fontWeight: FontWeight.w700, letterSpacing: 1)),
             const SizedBox(height: 4),
-            const Text('Paste teks invoice untuk analisa forensik manipulasi dokumen',
+            const Text('Scan foto atau paste teks invoice untuk deteksi manipulasi',
                 style: TextStyle(fontSize: 10, color: _ZC.textDim)),
             const SizedBox(height: 14),
+            Row(children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _pickImage(ImageSource.camera),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _ZC.gold.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: _ZC.gold.withOpacity(0.3)),
+                    ),
+                    child: const Column(children: [
+                      Text('📷', style: TextStyle(fontSize: 24)),
+                      SizedBox(height: 4),
+                      Text('Kamera', style: TextStyle(fontSize: 11,
+                          color: _ZC.gold, fontWeight: FontWeight.w600)),
+                      Text('Foto invoice', style: TextStyle(fontSize: 9, color: _ZC.textDim)),
+                    ]),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _pickImage(ImageSource.gallery),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _ZC.gold.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: _ZC.gold.withOpacity(0.3)),
+                    ),
+                    child: const Column(children: [
+                      Text('🖼️', style: TextStyle(fontSize: 24)),
+                      SizedBox(height: 4),
+                      Text('Galeri', style: TextStyle(fontSize: 11,
+                          color: _ZC.gold, fontWeight: FontWeight.w600)),
+                      Text('Pilih foto', style: TextStyle(fontSize: 9, color: _ZC.textDim)),
+                    ]),
+                  ),
+                ),
+              ),
+            ]),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: _ZC.primary.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: _ZC.primary.withOpacity(0.2)),
+              ),
+              child: const Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('💡 ', style: TextStyle(fontSize: 14)),
+                Expanded(child: Text(
+                  'Cara pakai: Foto invoice → copy semua teks → paste di kolom bawah → Scan Forensik',
+                  style: TextStyle(fontSize: 10, color: _ZC.textDim, height: 1.4),
+                )),
+              ]),
+            ),
+            const SizedBox(height: 12),
             TextField(
               controller: _invoiceCtrl,
               maxLines: 8,
