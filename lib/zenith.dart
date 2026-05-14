@@ -1885,52 +1885,30 @@ class _OcrForensicTabState extends State<_OcrForensicTab> {
                 style: TextStyle(fontSize: 12, color: _ZC.gold,
                     fontWeight: FontWeight.w700, letterSpacing: 1)),
             const SizedBox(height: 4),
-            const Text('Scan foto atau paste teks invoice untuk deteksi manipulasi',
+            const Text('Pilih foto invoice dari galeri untuk analisa forensik otomatis',
                 style: TextStyle(fontSize: 10, color: _ZC.textDim)),
             const SizedBox(height: 14),
-            Row(children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => _pickImage(ImageSource.camera),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: _ZC.gold.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: _ZC.gold.withOpacity(0.3)),
-                    ),
-                    child: const Column(children: [
-                      Text('📷', style: TextStyle(fontSize: 24)),
-                      SizedBox(height: 4),
-                      Text('Kamera', style: TextStyle(fontSize: 11,
-                          color: _ZC.gold, fontWeight: FontWeight.w600)),
-                      Text('Foto invoice', style: TextStyle(fontSize: 9, color: _ZC.textDim)),
-                    ]),
-                  ),
+            GestureDetector(
+              onTap: () => _pickImage(ImageSource.gallery),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  color: _ZC.gold.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _ZC.gold.withOpacity(0.3)),
                 ),
+                child: const Column(children: [
+                  Text('🖼️', style: TextStyle(fontSize: 32)),
+                  SizedBox(height: 6),
+                  Text('Pilih Foto Invoice dari Galeri',
+                      style: TextStyle(fontSize: 13, color: _ZC.gold, fontWeight: FontWeight.w700)),
+                  SizedBox(height: 2),
+                  Text('Foto invoice, nota, atau dokumen transaksi',
+                      style: TextStyle(fontSize: 10, color: _ZC.textDim)),
+                ]),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => _pickImage(ImageSource.gallery),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: _ZC.gold.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: _ZC.gold.withOpacity(0.3)),
-                    ),
-                    child: const Column(children: [
-                      Text('🖼️', style: TextStyle(fontSize: 24)),
-                      SizedBox(height: 4),
-                      Text('Galeri', style: TextStyle(fontSize: 11,
-                          color: _ZC.gold, fontWeight: FontWeight.w600)),
-                      Text('Pilih foto', style: TextStyle(fontSize: 9, color: _ZC.textDim)),
-                    ]),
-                  ),
-                ),
-              ),
-            ]),
+            ),
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.all(10),
@@ -1942,7 +1920,7 @@ class _OcrForensicTabState extends State<_OcrForensicTab> {
               child: const Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text('💡 ', style: TextStyle(fontSize: 14)),
                 Expanded(child: Text(
-                  'Cara pakai: Foto invoice → copy semua teks → paste di kolom bawah → Scan Forensik',
+                  'Pilih foto invoice → AI langsung analisa forensik otomatis',
                   style: TextStyle(fontSize: 10, color: _ZC.textDim, height: 1.4),
                 )),
               ]),
