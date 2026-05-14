@@ -118,6 +118,9 @@ class _ZenithScreenState extends State<ZenithScreen>
         final data = jsonDecode(alertRes.body);
         setState(() => _alerts = data['alerts'] ?? []);
       }
+      try {
+        await http.post(Uri.parse('$_ZAPI/zenith/auto-extract-gmail'),headers: {'Content-Type': 'application/json'},body: jsonEncode({'user_id': userId}),).timeout(const Duration(seconds: 30));
+      } catch (_) {}
     } catch (e) {
       debugPrint('[ZENITH] $e');
     } finally {
