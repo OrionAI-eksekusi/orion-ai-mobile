@@ -1803,7 +1803,7 @@ class _OcrForensicTabState extends State<_OcrForensicTab> {
 
   Future<void> _pickImage(ImageSource source) async {
     try {
-      final picked = await _picker.pickImage(source: source, imageQuality: 85);
+      final picked = await _picker.pickImage(source: source, imageQuality: 40, maxWidth: 1024, maxHeight: 1024);
       if (picked != null) {
         setState(() { _imagePath = picked.path; _scanning = true; _result = null; });
         final bytes = await File(picked.path).readAsBytes();
