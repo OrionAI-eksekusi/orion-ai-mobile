@@ -1802,35 +1802,27 @@ class _OcrForensicTabState extends State<_OcrForensicTab> {
         setState(() { _imagePath = picked.path; _scanning = true; _result = null; });
         final bytes = await File(picked.path).readAsBytes();
         final base64Image = base64Encode(bytes);
-        // Kirim langsung ke Claude API dari Flutter
-        final claudeRes = await http.post(
-          Uri.parse('https://api.anthropic.com/v1/messages'),
-          headers: {
-            'x-api-key': const String.fromEnvironment('CLAUDE_KEY', defaultValue: ''),
-            'anthropic-version': '2023-06-01',
-            'content-type': 'application/json',
-          },
+        // Kirim ke backend Railway — backend yang call Claude Vision
+        final res = await http.post(
+          Uri.parse('\$_ZAPI/zenith/ocr-vision'),
+          headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
-            'model': 'claude-sonnet-4-5',
-            'max_tokens': 1024,
-            'messages': [{
-              'role': 'user',
-              'content': [
-                {'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': base64Image}},
-                {'type': 'text', 'text': 'Analisa invoice ini. Jawab JSON: {"extracted_text":"...","forensic_status":"CLEAN/SUSPICIOUS/TAMPERED","risk_score":0,"flags":[],"summary":"...","recommended_actions":[]}'}
-              ]
-            }]
+            'user_id': widget.userId,
+            'image_base64': base64Image,
           }),
-        ).timeout(const Duration(seconds: 60));
-        if (claudeRes.statusCode == 200) {
-          final data = jsonDecode(claudeRes.body);
-          final text = data['content'][0]['text'];
-          final clean = text.replaceAll('```json','').replaceAll('```','').trim();
-          final result = jsonDecode(clean);
-          setState(() {
-            _result = result;
-            _invoiceCtrl.text = result['extracted_text'] ?? '';
-          });
+        ).timeout(const Duration(seconds: 90));
+        if (res.statusCode == 200) {
+          final data = jsonDecode(res.body);
+          if (data['status'] == 'success') {
+            setState(() {
+              _result = data['forensic'];
+              _invoiceCtrl.text = data['forensic']['extracted_text'] ?? '';
+            });
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error: \${data["message"]}'),
+                  backgroundColor: _ZC.danger));
+          }
         }
         setState(() => _scanning = false);
       }
