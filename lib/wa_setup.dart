@@ -5,7 +5,7 @@ import 'dart:convert';
 import 'dart:async';
 
 class WaSetupScreen extends StatefulWidget {
-  final bool isReconnect; // ← tambah parameter ini
+  final bool isReconnect;
   const WaSetupScreen({super.key, this.isReconnect = false});
 
   @override
@@ -18,7 +18,8 @@ class _WaSetupScreenState extends State<WaSetupScreen> {
   bool _isLoading = true;
   bool _isConnected = false;
   Timer? _timer;
-  Timer? _qrRefreshTimer; // ← auto refresh QR tiap 20 detik
+  Timer? _qrRefreshTimer;
+  String _userId = 'default';
 
   final _nameController = TextEditingController();
   final _fieldController = TextEditingController();
@@ -38,21 +39,35 @@ class _WaSetupScreenState extends State<WaSetupScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.isReconnect) {
-      // Kalau reconnect, langsung ke step QR saja, skip form
-      _step = 0;
-    }
-    _fetchQR();
-    // Auto refresh QR tiap 20 detik biar ga expired
+    if (widget.isReconnect) _step = 0;
+    _loadUserAndFetchQR();
     _qrRefreshTimer = Timer.periodic(const Duration(seconds: 20), (_) {
       if (!_isConnected) _fetchQR();
     });
   }
 
+  Future<void> _loadUserAndFetchQR() async {
+    final prefs = await SharedPreferences.getInstance();
+    _userId = prefs.getString('user_id') ?? 'default';
+    await _fetchQR();
+  }
+
   Future<void> _fetchQR() async {
     setState(() => _isLoading = true);
     try {
-      final res = await http.get(Uri.parse('$_gatewayUrl/qr'));
+      // Connect dulu — spawn session untuk user ini
+      await http.post(
+        Uri.parse('$_gatewayUrl/connect'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'user_id': _userId}),
+      ).timeout(const Duration(seconds: 10));
+
+      // Tunggu QR ter-generate
+      await Future.delayed(const Duration(seconds: 2));
+
+      final res = await http.get(
+        Uri.parse('$_gatewayUrl/qr?user_id=$_userId'),
+      );
       final data = jsonDecode(res.body);
       setState(() {
         _qrUrl = data['qr_url'] ?? '';
@@ -68,20 +83,22 @@ class _WaSetupScreenState extends State<WaSetupScreen> {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 3), (_) async {
       try {
-        final res = await http.get(Uri.parse('$_gatewayUrl/status'));
+        final res = await http.get(
+          Uri.parse('$_gatewayUrl/status?user_id=$_userId'),
+        );
         final data = jsonDecode(res.body);
         if (data['connected'] == true) {
           _timer?.cancel();
           _qrRefreshTimer?.cancel();
           final prefs = await SharedPreferences.getInstance();
           await prefs.setBool('wa_connected', true);
+          if (!mounted) return;
           setState(() {
             _isConnected = true;
-            // Kalau reconnect, langsung balik ke home
             if (widget.isReconnect) {
               Navigator.pushReplacementNamed(context, '/home');
             } else {
-              _step = 1; // Kalau setup pertama, lanjut isi profil
+              _step = 1;
             }
           });
         }
@@ -90,7 +107,11 @@ class _WaSetupScreenState extends State<WaSetupScreen> {
   }
 
   Future<void> _saveProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('user_id') ?? 'default';
+
     final profile = {
+      'user_id': userId,
       'name': _nameController.text,
       'tagline': 'Asisten AI untuk bisnis ${_nameController.text}',
       'field': _fieldController.text,
@@ -111,25 +132,41 @@ class _WaSetupScreenState extends State<WaSetupScreen> {
       'location': _locationController.text,
     };
 
+    // Simpan profil ke WA gateway per user
+    await http.post(
+      Uri.parse('$_gatewayUrl/save-profile'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(profile),
+    );
+
+    // Simpan profil ke backend
     await http.post(
       Uri.parse('$_backendUrl/chat/save-profile'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(profile),
     );
 
-    final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('wa_connected', true);
     await prefs.setString('business_name', _nameController.text);
 
-    if (mounted) {
-      Navigator.pushReplacementNamed(context, '/home');
-    }
+    if (mounted) Navigator.pushReplacementNamed(context, '/home');
   }
 
   @override
   void dispose() {
     _timer?.cancel();
     _qrRefreshTimer?.cancel();
+    _nameController.dispose();
+    _fieldController.dispose();
+    _descController.dispose();
+    _productNameController.dispose();
+    _productPriceController.dispose();
+    _productDescController.dispose();
+    _howToOrderController.dispose();
+    _waController.dispose();
+    _emailController.dispose();
+    _hoursController.dispose();
+    _locationController.dispose();
     super.dispose();
   }
 
@@ -178,13 +215,30 @@ class _WaSetupScreenState extends State<WaSetupScreen> {
           Text(
             widget.isReconnect
                 ? 'Scan QR ini untuk menghubungkan kembali'
-                : 'Scan QR ini dengan WhatsApp Business kamu',
+                : 'Scan QR ini dengan WhatsApp kamu',
             style: const TextStyle(fontSize: 13, color: Color(0xFF5566AA)),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A3A8F).withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFF2D5BE3).withOpacity(0.3)),
+            ),
+            child: Text(
+              'User: $_userId',
+              style: const TextStyle(fontSize: 10, color: Color(0xFF6B9FFF)),
+            ),
+          ),
+          const SizedBox(height: 32),
           if (_isLoading)
-            const CircularProgressIndicator(color: Color(0xFF4466FF))
+            const Column(children: [
+              CircularProgressIndicator(color: Color(0xFF4466FF)),
+              SizedBox(height: 12),
+              Text('Menyiapkan QR...', style: TextStyle(color: Color(0xFF5566AA), fontSize: 12)),
+            ])
           else if (_qrUrl.isNotEmpty)
             Container(
               padding: const EdgeInsets.all(12),
@@ -195,33 +249,35 @@ class _WaSetupScreenState extends State<WaSetupScreen> {
               child: Image.network(_qrUrl, width: 220, height: 220),
             )
           else
-            const Text('Gagal load QR', style: TextStyle(color: Colors.red)),
+            Column(children: [
+              const Text('Gagal load QR', style: TextStyle(color: Colors.red)),
+              const SizedBox(height: 8),
+              const Text('Tap Refresh untuk coba lagi',
+                  style: TextStyle(color: Color(0xFF5566AA), fontSize: 12)),
+            ]),
           const SizedBox(height: 24),
-          if (!_isConnected)
+          if (!_isConnected && !_isLoading)
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: const [
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 1.5,
-                    color: Color(0xFF4466FF),
-                  ),
-                ),
+                SizedBox(width: 16, height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 1.5, color: Color(0xFF4466FF))),
                 SizedBox(width: 10),
-                Text(
-                  'Menunggu scan...',
-                  style: TextStyle(color: Color(0xFF5566AA), fontSize: 13),
-                ),
+                Text('Menunggu scan...', style: TextStyle(color: Color(0xFF5566AA), fontSize: 13)),
               ],
             ),
           const Spacer(),
           GestureDetector(
             onTap: _fetchQR,
-            child: const Text(
-              'Refresh QR',
-              style: TextStyle(color: Color(0xFF4466FF), fontSize: 13),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A3A8F).withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFF4466FF).withOpacity(0.4)),
+              ),
+              child: const Text('🔄 Refresh QR',
+                  style: TextStyle(color: Color(0xFF4466FF), fontSize: 13)),
             ),
           ),
         ],
@@ -235,28 +291,19 @@ class _WaSetupScreenState extends State<WaSetupScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '✅ WhatsApp Terhubung!',
-            style: TextStyle(
-              color: Color(0xFF44FF88),
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          const Text('✅ WhatsApp Terhubung!',
+              style: TextStyle(color: Color(0xFF44FF88), fontSize: 16,
+                  fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
-          const Text(
-            'Sekarang isi profil bisnis kamu',
-            style: TextStyle(color: Color(0xFF5566AA), fontSize: 13),
-          ),
+          const Text('Sekarang isi profil bisnis kamu',
+              style: TextStyle(color: Color(0xFF5566AA), fontSize: 13)),
           const SizedBox(height: 24),
           _field('Nama Bisnis', _nameController),
           _field('Bidang Bisnis (contoh: Kuliner, Fashion)', _fieldController),
           _field('Deskripsi Bisnis', _descController, maxLines: 3),
           const SizedBox(height: 8),
-          const Text(
-            'Produk/Layanan',
-            style: TextStyle(color: Color(0xFF8890AA), fontSize: 13),
-          ),
+          const Text('Produk/Layanan',
+              style: TextStyle(color: Color(0xFF8890AA), fontSize: 13)),
           const SizedBox(height: 8),
           _field('Nama Produk', _productNameController),
           _field('Harga', _productPriceController),
@@ -277,15 +324,10 @@ class _WaSetupScreenState extends State<WaSetupScreen> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: const Color(0xFF2244AA), width: 0.8),
               ),
-              child: const Text(
-                'Mulai Gunakan Orion AI',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Color(0xFF5577EE),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              child: const Text('Mulai Gunakan Orion AI',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Color(0xFF5577EE), fontSize: 14,
+                      fontWeight: FontWeight.w500)),
             ),
           ),
           const SizedBox(height: 40),
@@ -294,8 +336,7 @@ class _WaSetupScreenState extends State<WaSetupScreen> {
     );
   }
 
-  Widget _field(String label, TextEditingController controller,
-      {int maxLines = 1}) {
+  Widget _field(String label, TextEditingController controller, {int maxLines = 1}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextField(
