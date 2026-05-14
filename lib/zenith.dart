@@ -1789,8 +1789,14 @@ class _OcrForensicTab extends StatefulWidget {
 }
 
 class _OcrForensicTabState extends State<_OcrForensicTab> {
+  @override
+  void initState() {
+    super.initState();
+    _userId = widget.userId;
+  }
   final _invoiceCtrl = TextEditingController();
   final _picker = ImagePicker();
+  String _userId = 'default';
   bool _scanning = false;
   Map<String, dynamic>? _result;
   String? _imagePath;
@@ -1805,7 +1811,7 @@ class _OcrForensicTabState extends State<_OcrForensicTab> {
         final res = await http.post(
           Uri.parse('$_ZAPI/zenith/ocr-vision'),
           headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'user_id': widget.userId, 'image_base64': base64Image}),
+          body: jsonEncode({'user_id': _userId, 'image_base64': base64Image}),
         ).timeout(const Duration(seconds: 45));
         if (res.statusCode == 200) {
           final data = jsonDecode(res.body);
