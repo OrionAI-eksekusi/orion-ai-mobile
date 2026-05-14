@@ -13,6 +13,7 @@ final GoogleSignIn _googleSignIn = GoogleSignIn(
     'profile',
     'https://www.googleapis.com/auth/gmail.readonly',
     'https://www.googleapis.com/auth/gmail.send',
+    'https://www.googleapis.com/auth/drive.readonly',
   ],
 );
 
@@ -66,18 +67,27 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     try {
       final account = await _googleSignIn.signIn();
       if (account != null && mounted) {
-        // Simpan user_id ke SharedPreferences
         final prefs = await SharedPreferences.getInstance();
         final userId = account.email.split('@')[0].toUpperCase();
-await prefs.setString('user_id', userId);
+        await prefs.setString('user_id', userId);
         await prefs.setString('user_name', account.displayName ?? '');
         await prefs.setString('user_email', account.email);
 
-        // Kirim profil user ke backend
+        // Ambil OAuth token Gmail user — ini yang buat multi-user bisa baca email masing-masing
+        final auth = await account.authentication;
+        final accessToken = auth.accessToken ?? '';
+        final idToken = auth.idToken ?? '';
+
+        debugPrint('[OAUTH] accessToken: ${accessToken.isNotEmpty ? "OK" : "EMPTY"}');
+        debugPrint('[OAUTH] idToken: ${idToken.isNotEmpty ? "OK" : "EMPTY"}');
+
+        // Kirim profil + token Gmail ke backend
         await _saveUserProfile(
           userId: userId,
           name: account.displayName ?? account.email,
           email: account.email,
+          accessToken: accessToken,
+          idToken: idToken,
         );
 
         if (mounted) {
@@ -95,6 +105,8 @@ await prefs.setString('user_id', userId);
     required String userId,
     required String name,
     required String email,
+    String accessToken = '',
+    String idToken = '',
   }) async {
     try {
       await http.post(
@@ -107,8 +119,11 @@ await prefs.setString('user_id', userId);
           'phone': '',
           'city': 'Jakarta',
           'briefing_hour': 6,
+          'gmail_access_token': accessToken,
+          'gmail_id_token': idToken,
         }),
       );
+      debugPrint('[SAVE PROFILE] Berhasil untuk $userId');
     } catch (e) {
       debugPrint('[SAVE PROFILE ERROR] $e');
     }
@@ -122,7 +137,7 @@ await prefs.setString('user_id', userId);
       backgroundColor: const Color(0xFF020818),
       body: Stack(
         children: [
-          // ── Background bumi asli ──
+          // ── Background bumi ──
           Positioned.fill(
             child: Image.asset(
               'assets/images/bumi.jpg',
@@ -132,7 +147,7 @@ await prefs.setString('user_id', userId);
             ),
           ),
 
-          // ── Gradient overlay atas ──
+          // ── Gradient atas ──
           Positioned(
             top: 0, left: 0, right: 0,
             height: h * 0.45,
@@ -147,7 +162,7 @@ await prefs.setString('user_id', userId);
             ),
           ),
 
-          // ── Gradient overlay bawah ──
+          // ── Gradient bawah ──
           Positioned(
             bottom: 0, left: 0, right: 0,
             height: h * 0.6,
@@ -163,7 +178,7 @@ await prefs.setString('user_id', userId);
             ),
           ),
 
-          // ── Bintang kelap kelip ──
+          // ── Bintang ──
           AnimatedBuilder(
             animation: _starController,
             builder: (_, __) => CustomPaint(
@@ -198,10 +213,6 @@ await prefs.setString('user_id', userId);
                             color: const Color(0xFF2D5BE3).withOpacity(0.4),
                             blurRadius: 30, spreadRadius: 5,
                           ),
-                          BoxShadow(
-                            color: const Color(0xFF6B9FFF).withOpacity(0.1),
-                            blurRadius: 60, spreadRadius: 15,
-                          ),
                         ],
                       ),
                       child: CustomPaint(painter: _OrionLogoPainter()),
@@ -209,36 +220,21 @@ await prefs.setString('user_id', userId);
 
                     const SizedBox(height: 20),
 
-                    // ORION AI title
                     ShaderMask(
                       shaderCallback: (b) => const LinearGradient(
                         colors: [Color(0xFF6B9FFF), Color(0xFFFFFFFF), Color(0xFF6B9FFF)],
                         stops: [0.0, 0.5, 1.0],
                       ).createShader(b),
-                      child: const Text(
-                        'ORION AI',
-                        style: TextStyle(
-                          fontSize: 36,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                          letterSpacing: 8,
-                          height: 1,
-                        ),
-                      ),
+                      child: const Text('ORION AI',
+                          style: TextStyle(fontSize: 36, fontWeight: FontWeight.w800,
+                              color: Colors.white, letterSpacing: 8, height: 1)),
                     ),
                     const SizedBox(height: 6),
-                    const Text(
-                      'AI EXECUTION SYSTEM',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF4A6AAA),
-                        letterSpacing: 5,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    const Text('AI EXECUTION SYSTEM',
+                        style: TextStyle(fontSize: 11, color: Color(0xFF4A6AAA),
+                            letterSpacing: 5, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 16),
 
-                    // Tagline
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                       decoration: BoxDecoration(
@@ -250,29 +246,20 @@ await prefs.setString('user_id', userId);
                       child: const Text(
                         'Orion handles everything. You focus on growth.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF8BB8FF),
-                          fontWeight: FontWeight.w500,
-                          height: 1.4,
-                        ),
+                        style: TextStyle(fontSize: 13, color: Color(0xFF8BB8FF),
+                            fontWeight: FontWeight.w500, height: 1.4),
                       ),
                     ),
                     const SizedBox(height: 8),
                     const Text(
                       'Asisten AI yang bekerja otomatis 24/7\nuntuk komunikasi, tugas, dan eksekusi perintah.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF3A5A8A),
-                        height: 1.6,
-                        fontWeight: FontWeight.w400,
-                      ),
+                      style: TextStyle(fontSize: 12, color: Color(0xFF3A5A8A),
+                          height: 1.6, fontWeight: FontWeight.w400),
                     ),
 
                     const SizedBox(height: 32),
 
-                    // Features
                     _featureCard(Icons.email_outlined, 'Balas Email Otomatis',
                         'AI baca & balas email bisnis kamu'),
                     const SizedBox(height: 10),
@@ -307,30 +294,24 @@ await prefs.setString('user_id', userId);
                             stops: [0.0, 0.5, 1.0],
                           ),
                           borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF2D5BE3).withOpacity(0.5),
-                              blurRadius: 24, offset: const Offset(0, 8),
-                            ),
-                          ],
+                          boxShadow: [BoxShadow(
+                            color: const Color(0xFF2D5BE3).withOpacity(0.5),
+                            blurRadius: 24, offset: const Offset(0, 8),
+                          )],
                           border: Border.all(
                               color: const Color(0xFF6B9FFF).withOpacity(0.3), width: 0.5),
                         ),
                         child: _isLoading
-                            ? const Center(
-                                child: SizedBox(width: 20, height: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)))
+                            ? const Center(child: SizedBox(width: 20, height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)))
                             : const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(Icons.g_mobiledata, color: Colors.white, size: 26),
                                   SizedBox(width: 8),
                                   Text('Mulai Sekarang',
-                                      style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w700,
-                                          letterSpacing: 0.5)),
+                                      style: TextStyle(color: Colors.white, fontSize: 16,
+                                          fontWeight: FontWeight.w700, letterSpacing: 0.5)),
                                 ],
                               ),
                       ),
@@ -338,7 +319,7 @@ await prefs.setString('user_id', userId);
 
                     const SizedBox(height: 14),
                     const Text(
-                      'Dengan masuk, kamu mengizinkan Orion AI\nmengakses Gmail untuk membalas email.',
+                      'Dengan masuk, kamu mengizinkan Orion AI\nmengakses Gmail untuk membaca & membalas email.',
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 10, color: Color(0xFF2A3A5A), height: 1.6),
                     ),
@@ -361,10 +342,8 @@ await prefs.setString('user_id', userId);
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
             color: const Color(0xFF1A3A8F).withOpacity(0.5), width: 0.8),
-        boxShadow: [
-          BoxShadow(
-              color: const Color(0xFF2D5BE3).withOpacity(0.05), blurRadius: 10),
-        ],
+        boxShadow: [BoxShadow(
+            color: const Color(0xFF2D5BE3).withOpacity(0.05), blurRadius: 10)],
       ),
       child: Row(
         children: [
@@ -377,10 +356,8 @@ await prefs.setString('user_id', userId);
               ),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: const Color(0xFF2D5BE3).withOpacity(0.4)),
-              boxShadow: [
-                BoxShadow(
-                    color: const Color(0xFF2D5BE3).withOpacity(0.2), blurRadius: 8),
-              ],
+              boxShadow: [BoxShadow(
+                  color: const Color(0xFF2D5BE3).withOpacity(0.2), blurRadius: 8)],
             ),
             child: Icon(icon, color: const Color(0xFF6B9FFF), size: 20),
           ),
@@ -389,16 +366,11 @@ await prefs.setString('user_id', userId);
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFFE0EAFF))),
+                Text(title, style: const TextStyle(fontSize: 14,
+                    fontWeight: FontWeight.w700, color: Color(0xFFE0EAFF))),
                 const SizedBox(height: 2),
-                Text(sub,
-                    style: const TextStyle(
-                        fontSize: 12, color: Color(0xFF4A6AAA),
-                        fontWeight: FontWeight.w400)),
+                Text(sub, style: const TextStyle(fontSize: 12,
+                    color: Color(0xFF4A6AAA), fontWeight: FontWeight.w400)),
               ],
             ),
           ),
