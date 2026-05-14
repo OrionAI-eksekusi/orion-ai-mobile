@@ -1812,7 +1812,7 @@ class _OcrForensicTabState extends State<_OcrForensicTab> {
         final base64Image = base64Encode(bytes);
         // Kirim ke backend Railway — backend yang call Claude Vision
         final res = await http.post(
-          Uri.parse('\$_ZAPI/zenith/ocr-vision'),
+          Uri.parse('https://web-production-d2935.up.railway.app/zenith/ocr-vision'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
             'user_id': widget.userId,
