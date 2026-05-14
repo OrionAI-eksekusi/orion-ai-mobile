@@ -1799,21 +1799,31 @@ class _OcrForensicTabState extends State<_OcrForensicTab> {
     try {
       final picked = await _picker.pickImage(source: source, imageQuality: 85);
       if (picked != null) {
-        setState(() => _imagePath = picked.path);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('📄 Foto dipilih — copy teks dari foto lalu paste di kolom bawah'),
-            backgroundColor: Color(0xFF2D5BE3),
-            duration: Duration(seconds: 4),
-          ),
-        );
+        setState(() { _imagePath = picked.path; _scanning = true; _result = null; });
+        final bytes = await File(picked.path).readAsBytes();
+        final base64Image = base64Encode(bytes);
+        final res = await http.post(
+          Uri.parse('$_ZAPI/zenith/ocr-vision'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'user_id': widget.userId, 'image_base64': base64Image}),
+        ).timeout(const Duration(seconds: 45));
+        if (res.statusCode == 200) {
+          final data = jsonDecode(res.body);
+          if (data['status'] == 'success') {
+            setState(() {
+              _result = data['forensic'];
+              _invoiceCtrl.text = data['forensic']['extracted_text'] ?? '';
+            });
+          }
+        }
+        setState(() => _scanning = false);
       }
     } catch (e) {
+      setState(() => _scanning = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: \$e'), backgroundColor: _ZC.danger));
+        SnackBar(content: Text('Error: $e'), backgroundColor: _ZC.danger));
     }
   }
-
   Future<void> _scan() async {
     if (_invoiceCtrl.text.isEmpty) return;
     setState(() { _scanning = true; _result = null; });
