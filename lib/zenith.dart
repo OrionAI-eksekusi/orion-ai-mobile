@@ -1797,9 +1797,17 @@ class _OcrForensicTabState extends State<_OcrForensicTab> {
 
   Future<void> _pickImage(ImageSource source) async {
     try {
-      final picked = await _picker.pickImage(source: source, imageQuality: 20, maxWidth: 512, maxHeight: 512);
+      XFile? picked;
+      try {
+        picked = await _picker.pickImage(source: source, imageQuality: 20, maxWidth: 512, maxHeight: 512);
+      } catch (e) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal akses kamera: \$e'), backgroundColor: _ZC.danger));
+        return;
+      }
       if (picked != null) {
-        setState(() { _imagePath = picked.path; _scanning = true; _result = null; });
+        if (!mounted) return;
+        setState(() { _imagePath = picked!.path; _scanning = true; _result = null; });
         final bytes = await File(picked.path).readAsBytes();
         final base64Image = base64Encode(bytes);
         // Kirim ke backend Railway — backend yang call Claude Vision
