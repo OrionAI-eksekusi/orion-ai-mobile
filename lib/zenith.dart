@@ -68,6 +68,7 @@ class _ZenithScreenState extends State<ZenithScreen>
   late List<_ZStar> _stars;
   late TabController _tabController;
 
+  String _userId = 'default';
   Map<String, dynamic> _dashboard = {};
   List<dynamic> _alerts = [];
   bool _loading = true;
@@ -1796,7 +1797,7 @@ class _OcrForensicTabState extends State<_OcrForensicTab> {
 
   Future<void> _pickImage(ImageSource source) async {
     try {
-      final picked = await _picker.pickImage(source: source, imageQuality: 40, maxWidth: 1024, maxHeight: 1024);
+      final picked = await _picker.pickImage(source: source, imageQuality: 20, maxWidth: 512, maxHeight: 512);
       if (picked != null) {
         setState(() { _imagePath = picked.path; _scanning = true; _result = null; });
         final bytes = await File(picked.path).readAsBytes();
@@ -1805,7 +1806,7 @@ class _OcrForensicTabState extends State<_OcrForensicTab> {
           Uri.parse('$_ZAPI/zenith/ocr-vision'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({'user_id': widget.userId, 'image_base64': base64Image}),
-        ).timeout(const Duration(seconds: 45));
+        ).timeout(const Duration(seconds: 90));
         if (res.statusCode == 200) {
           final data = jsonDecode(res.body);
           if (data['status'] == 'success') {
