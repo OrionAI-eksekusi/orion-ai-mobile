@@ -1802,7 +1802,7 @@ class _OcrForensicTabState extends State<_OcrForensicTab> {
     try {
       XFile? picked;
       try {
-        picked = await _picker.pickImage(source: source, imageQuality: 20, maxWidth: 512, maxHeight: 512);
+        picked = await _picker.pickImage(source: source, imageQuality: 15, maxWidth: 400, maxHeight: 400);
       } catch (e) {
         if (mounted) ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Gagal akses kamera: \$e'), backgroundColor: _ZC.danger));
