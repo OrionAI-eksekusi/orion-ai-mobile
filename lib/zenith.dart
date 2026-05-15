@@ -468,10 +468,52 @@ class _ZenithScreenState extends State<ZenithScreen>
               fontSize: 10, color: _ZC.textDim), maxLines: 2,
               overflow: TextOverflow.ellipsis),
         ])),
-        Text(_formatRp(alert['amount'] ?? 0),
-            style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600)),
+        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          Text(_formatRp(alert['amount'] ?? 0),
+              style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 4),
+          GestureDetector(
+            onTap: () => _verifyAlert(alert),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2D8B4E).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFF2D8B4E).withOpacity(0.4)),
+              ),
+              child: const Text('Verifikasi',
+                  style: TextStyle(fontSize: 8, color: Color(0xFF2D8B4E),
+                      fontWeight: FontWeight.w700)),
+            ),
+          ),
+        ]),
       ]),
     );
+  }
+
+  Future<void> _verifyAlert(dynamic alert) async {
+    final alertId = alert['id']?.toString() ?? '';
+    try {
+      final res = await http.post(
+        Uri.parse('https://web-production-d2935.up.railway.app/zenith/verify-alert'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'user_id': _userId,
+          'alert_id': alertId,
+          'is_valid': true,
+          'notes': 'Diverifikasi via Orion AI'
+        }),
+      ).timeout(const Duration(seconds: 10));
+      if (res.statusCode == 200 && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Alert berhasil diverifikasi!'),
+              backgroundColor: Color(0xFF2D8B4E)));
+        _loadData();
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: _ZC.danger));
+    }
   }
 
   Widget _vendorSpendCard(dynamic vendor) {
