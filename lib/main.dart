@@ -941,36 +941,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: const Icon(Icons.settings, color: OrionColors.textDim, size: 16),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.pushNamed(context, '/settings');
-                    },
-                    child: Container(
-                      width: 32, height: 32,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1A3A8F).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(Icons.settings, color: OrionColors.textDim, size: 16),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.pushNamed(context, '/settings');
-                    },
-                    child: Container(
-                      width: 32, height: 32,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1A3A8F).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(Icons.settings, color: OrionColors.textDim, size: 16),
-                    ),
-                  ),
+
                   const SizedBox(width: 8),
                   GestureDetector(
                     onTap: () {
