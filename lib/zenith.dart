@@ -705,7 +705,24 @@ class _PriceGuardTabState extends State<_PriceGuardTab> {
       final file = File(result.files.single.path!);
       final content = await file.readAsString();
       final lines = content.split('\n').where((l) => l.trim().isNotEmpty).toList();
-      final rows = lines.map((l) => l.split(',').map((c) => c.trim().replaceAll('"', '')).toList()).toList();
+      // Parse CSV dengan handle quoted fields
+      final rows = lines.map((l) {
+        final cells = <String>[];
+        var current = '';
+        var inQuotes = false;
+        for (var char in l.split('')) {
+          if (char == '"') {
+            inQuotes = !inQuotes;
+          } else if (char == ',' && !inQuotes) {
+            cells.add(current.trim());
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+        cells.add(current.trim());
+        return cells;
+      }).toList();
 
       if (rows.isEmpty) return;
 
@@ -752,7 +769,7 @@ class _PriceGuardTabState extends State<_PriceGuardTab> {
 
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Import selesai: \$success berhasil, \$failed gagal'),
+          content: Text('Import selesai: $success berhasil, $failed gagal'),
           backgroundColor: success > 0 ? const Color(0xFF2D8B4E) : _ZC.danger,
         ),
       );
