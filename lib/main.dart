@@ -18,7 +18,9 @@ import 'payment.dart';
 import 'upgrade.dart';
 import 'zenith.dart';
 import 'settings.dart';
+import 'privacy_policy.dart';
 import 'settings.dart';
+import 'privacy_policy.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -136,7 +138,9 @@ class OrionApp extends StatelessWidget {
         '/upgrade': (context) => const UpgradeScreen(),
         '/zenith': (context) => const ZenithScreen(),
         '/settings': (context) => const SettingsScreen(),
+        '/privacy-policy': (context) => const PrivacyPolicyScreen(),
         '/settings': (context) => const SettingsScreen(),
+        '/privacy-policy': (context) => const PrivacyPolicyScreen(),
       },
     );
   }
