@@ -1,4 +1,3 @@
-cat > ~/Documents/orion_ai_mobile/lib/settings.dart << 'EOF'
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,7 +7,6 @@ const String _API = 'https://web-production-d2935.up.railway.app';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
-
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
@@ -38,11 +36,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _nameCtrl.text = prefs.getString('user_name') ?? '';
       _emailCtrl.text = prefs.getString('user_email') ?? '';
     });
-
     try {
-      final res = await http.get(
-        Uri.parse('$_API/chat/user-profile/$_userId'),
-      ).timeout(const Duration(seconds: 5));
+      final res = await http.get(Uri.parse('$_API/chat/user-profile/$_userId'))
+          .timeout(const Duration(seconds: 5));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         final profile = data['profile'] ?? {};
@@ -77,9 +73,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('user_name', _nameCtrl.text);
-      setState(() { _saved = true; });
+      setState(() => _saved = true);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
     } finally {
       setState(() => _loading = false);
@@ -87,10 +83,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   String _getPlanLabel() {
-    if (_plan == 'trial') return '✨ Trial · $_trialDaysLeft hari lagi';
-    if (_plan == 'apex') return '⚡ Apex · 100 perintah/hari';
-    if (_plan == 'zenith') return '👑 Zenith · 200 perintah/hari';
-    return '🆓 Free · 10 perintah/hari';
+    if (_plan == 'trial') return 'Trial · $_trialDaysLeft hari lagi';
+    if (_plan == 'apex') return 'Apex · 100 perintah/hari';
+    if (_plan == 'zenith') return 'Zenith · 200 perintah/hari';
+    return 'Free · 10 perintah/hari';
   }
 
   @override
@@ -118,16 +114,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 fontWeight: FontWeight.w600)),
         actions: [
           if (_saved)
-            const Padding(
-              padding: EdgeInsets.only(right: 16),
-              child: Icon(Icons.check_circle, color: Color(0xFF2D8B4E), size: 20),
-            ),
+            const Padding(padding: EdgeInsets.only(right: 16),
+                child: Icon(Icons.check_circle, color: Color(0xFF2D8B4E), size: 20)),
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Plan info
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -136,25 +129,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
               border: Border.all(color: const Color(0xFF1A3A8F).withOpacity(0.5)),
             ),
             child: Row(children: [
-              Container(
-                width: 44, height: 44,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1A3A8F).withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.person, color: Color(0xFF6B9FFF), size: 22),
-              ),
+              Container(width: 44, height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1A3A8F).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.person, color: Color(0xFF6B9FFF), size: 22)),
               const SizedBox(width: 12),
-              Expanded(child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(_nameCtrl.text.isNotEmpty ? _nameCtrl.text : 'User',
-                      style: const TextStyle(fontSize: 14,
-                          fontWeight: FontWeight.w600, color: Color(0xFFD0DCFF))),
-                  Text(_getPlanLabel(),
-                      style: const TextStyle(fontSize: 11, color: Color(0xFF3A5A9A))),
-                ],
-              )),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(_nameCtrl.text.isNotEmpty ? _nameCtrl.text : 'User',
+                    style: const TextStyle(fontSize: 14,
+                        fontWeight: FontWeight.w600, color: Color(0xFFD0DCFF))),
+                Text(_getPlanLabel(),
+                    style: const TextStyle(fontSize: 11, color: Color(0xFF3A5A9A))),
+              ])),
               GestureDetector(
                 onTap: () => Navigator.pushNamed(context, '/upgrade'),
                 child: Container(
@@ -172,9 +160,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ]),
           ),
           const SizedBox(height: 20),
-
-          // Profile form
-          _sectionTitle('👤 Profil Saya'),
+          _sectionTitle('Profil Saya'),
           const SizedBox(height: 10),
           _inputField('Nama', _nameCtrl, Icons.person_outline),
           const SizedBox(height: 10),
@@ -184,9 +170,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 10),
           _inputField('Kota', _cityCtrl, Icons.location_on_outlined),
           const SizedBox(height: 20),
-
-          // Briefing hour
-          _sectionTitle('⏰ Jam Briefing Harian'),
+          _sectionTitle('Jam Briefing Harian'),
           const SizedBox(height: 10),
           Container(
             padding: const EdgeInsets.all(16),
@@ -211,33 +195,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 inactiveColor: const Color(0xFF1A3A8F).withOpacity(0.3),
                 onChanged: (v) => setState(() => _briefingHour = v.round()),
               ),
-              const Text('Orion akan kirim briefing email setiap hari pada jam ini',
+              const Text('Orion kirim briefing email setiap hari pada jam ini',
                   style: TextStyle(fontSize: 10, color: Color(0xFF3A5A9A))),
             ]),
           ),
-          const SizedBox(height: 20),
-
-          // Info
-          _sectionTitle('ℹ️ Informasi Akun'),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF060F24),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFF1A3A8F).withOpacity(0.3)),
-            ),
-            child: Column(children: [
-              _infoRow('User ID', _userId),
-              const Divider(color: Color(0xFF1A3A8F), height: 20),
-              _infoRow('Plan', _getPlanLabel()),
-              const Divider(color: Color(0xFF1A3A8F), height: 20),
-              _infoRow('Email', _emailCtrl.text.isNotEmpty ? _emailCtrl.text : '-'),
-            ]),
-          ),
           const SizedBox(height: 24),
-
-          // Save button
           GestureDetector(
             onTap: _loading ? null : _saveProfile,
             child: Container(
@@ -247,43 +209,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 gradient: const LinearGradient(
                     colors: [Color(0xFF1A3A8F), Color(0xFF2D5BE3)]),
                 borderRadius: BorderRadius.circular(14),
-                boxShadow: [BoxShadow(
-                    color: const Color(0xFF2D5BE3).withOpacity(0.3),
-                    blurRadius: 12, offset: const Offset(0, 4))],
               ),
-              child: Center(
-                child: _loading
-                    ? const SizedBox(width: 20, height: 20,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text('Simpan Perubahan',
-                        style: TextStyle(color: Colors.white, fontSize: 14,
-                            fontWeight: FontWeight.w700)),
-              ),
+              child: Center(child: _loading
+                  ? const SizedBox(width: 20, height: 20,
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : const Text('Simpan Perubahan',
+                      style: TextStyle(color: Colors.white, fontSize: 14,
+                          fontWeight: FontWeight.w700))),
             ),
           ),
           const SizedBox(height: 12),
-
-          // Logout / disconnect WA
           GestureDetector(
-            onTap: () async {
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.setBool('wa_connected', false);
-              if (mounted) Navigator.pushNamed(context, '/wa-reconnect');
-            },
+            onTap: () => Navigator.pushNamed(context, '/privacy-policy'),
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 14),
               decoration: BoxDecoration(
                 color: const Color(0xFF060F24),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                    color: const Color(0xFF2D5BE3).withOpacity(0.3)),
+                border: Border.all(color: const Color(0xFF1A3A8F).withOpacity(0.3)),
               ),
-              child: const Center(
-                child: Text('🔄 Reconnect WhatsApp',
-                    style: TextStyle(color: Color(0xFF6B9FFF), fontSize: 14,
-                        fontWeight: FontWeight.w600)),
-              ),
+              child: const Center(child: Text('Kebijakan Privasi',
+                  style: TextStyle(color: Color(0xFF6B9FFF), fontSize: 14))),
             ),
           ),
           const SizedBox(height: 30),
@@ -299,7 +246,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               borderRadius: BorderRadius.circular(2))),
       const SizedBox(width: 8),
       Text(title, style: const TextStyle(fontSize: 12,
-          color: Color(0xFF6B9FFF), fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+          color: Color(0xFF6B9FFF), fontWeight: FontWeight.w700)),
     ]);
   }
 
@@ -322,13 +269,4 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-
-  Widget _infoRow(String label, String value) {
-    return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-      Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF3A5A9A))),
-      Text(value, style: const TextStyle(fontSize: 12, color: Color(0xFFD0DCFF),
-          fontWeight: FontWeight.w500)),
-    ]);
-  }
 }
-EOF
