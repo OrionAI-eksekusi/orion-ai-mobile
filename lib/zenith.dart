@@ -4,7 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
-import 'package:csv/csv.dart';
 import 'dart:math' as math;
 import 'package:image_picker/image_picker.dart';
 
@@ -705,7 +704,8 @@ class _PriceGuardTabState extends State<_PriceGuardTab> {
 
       final file = File(result.files.single.path!);
       final content = await file.readAsString();
-      final rows = const CsvToListConverter().convert(content, eol: '\n');
+      final lines = content.split('\n').where((l) => l.trim().isNotEmpty).toList();
+      final rows = lines.map((l) => l.split(',').map((c) => c.trim().replaceAll('"', '')).toList()).toList();
 
       if (rows.isEmpty) return;
 
