@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'dart:math' as math;
+import 'package:url_launcher/url_launcher.dart';
 
 const String _API = 'https://web-production-d2935.up.railway.app';
 
