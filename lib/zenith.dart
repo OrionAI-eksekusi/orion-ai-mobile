@@ -745,7 +745,7 @@ class _PriceGuardTabState extends State<_PriceGuardTab> {
           if (vendor.isEmpty || item.isEmpty || price == 0) continue;
 
           final res = await http.post(
-            Uri.parse('\$_ZAPI/zenith/price-guard'),
+            Uri.parse('https://web-production-d2935.up.railway.app/zenith/price-guard'),
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({
               'user_id': widget.userId,
@@ -1558,7 +1558,7 @@ class _AiInvestigatorTabState extends State<_AiInvestigatorTab> {
     setState(() { _investigating = true; _result = null; });
     try {
       final res = await http.post(
-        Uri.parse('$_ZAPI/zenith/investigate'),
+        Uri.parse('https://web-production-d2935.up.railway.app/zenith/investigate'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'user_id': widget.userId,
