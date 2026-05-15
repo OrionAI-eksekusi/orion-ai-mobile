@@ -3,6 +3,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:csv/csv.dart';
 import 'dart:math' as math;
 import 'package:image_picker/image_picker.dart';
 
@@ -693,6 +695,74 @@ class _PriceGuardTabState extends State<_PriceGuardTab> {
     }
   }
 
+  Future<void> _importCSV() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['csv', 'txt'],
+      );
+      if (result == null) return;
+
+      final file = File(result.files.single.path!);
+      final content = await file.readAsString();
+      final rows = const CsvToListConverter().convert(content, eol: '\n');
+
+      if (rows.isEmpty) return;
+
+      // Skip header row
+      int success = 0;
+      int failed = 0;
+
+      setState(() => _analyzing = true);
+
+      for (int i = 1; i < rows.length; i++) {
+        final row = rows[i];
+        if (row.length < 4) continue;
+        try {
+          final vendor = row[0].toString().trim();
+          final item = row[1].toString().trim();
+          final price = double.tryParse(row[2].toString().replaceAll(',', '').replaceAll('.', '')) ?? 0;
+          final qty = double.tryParse(row[3].toString()) ?? 1;
+          final category = row.length > 4 ? row[4].toString().trim() : 'general';
+
+          if (vendor.isEmpty || item.isEmpty || price == 0) continue;
+
+          final res = await http.post(
+            Uri.parse('\$_ZAPI/zenith/price-guard'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'user_id': widget.userId,
+              'vendor_name': vendor,
+              'item_description': item,
+              'unit_price': price,
+              'quantity': qty,
+              'category': category,
+            }),
+          ).timeout(const Duration(seconds: 30));
+
+          if (res.statusCode == 200) success++;
+          else failed++;
+        } catch (_) {
+          failed++;
+        }
+      }
+
+      setState(() => _analyzing = false);
+      widget.onAnalyzed();
+
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Import selesai: \$success berhasil, \$failed gagal'),
+          backgroundColor: success > 0 ? const Color(0xFF2D8B4E) : _ZC.danger,
+        ),
+      );
+    } catch (e) {
+      setState(() => _analyzing = false);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: \$e'), backgroundColor: _ZC.danger));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView(
@@ -751,6 +821,25 @@ class _PriceGuardTabState extends State<_PriceGuardTab> {
                   )).toList(),
                   onChanged: (v) => setState(() => _category = v!),
                 ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: _analyzing ? null : _importCSV,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0A1428),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _ZC.gold.withOpacity(0.4)),
+                ),
+                child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  Icon(Icons.upload_file, color: _ZC.gold, size: 18),
+                  SizedBox(width: 8),
+                  Text('Import CSV / Excel', style: TextStyle(
+                      color: _ZC.gold, fontWeight: FontWeight.w700, fontSize: 13)),
+                ]),
               ),
             ),
             const SizedBox(height: 16),
